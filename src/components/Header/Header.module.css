@@ -1,0 +1,74 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--header-height);
+  padding: 0 var(--space-5);
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-right: auto;
+  border-radius: var(--radius-sm);
+  color: var(--structure);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  text-decoration: none;
+}
+
+.logo:hover {
+  text-decoration: none;
+}
+
+.logoMark {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  background: var(--structure);
+  color: var(--bg);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+@media (max-width: 640px) {
+  .inner {
+    padding: 0 var(--space-4);
+  }
+
+  /* Buttons fold down to their icon on narrow screens. */
+  .collapsible {
+    width: 40px;
+    padding: 0;
+  }
+
+  .collapsible .label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 359px) {
+  .logoText {
+    display: none;
+  }
+}

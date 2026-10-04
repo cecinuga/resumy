@@ -1,0 +1,106 @@
+.button {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 40px;
+  padding: 0 var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    background-color var(--duration) var(--ease),
+    border-color var(--duration) var(--ease),
+    color var(--duration) var(--ease);
+}
+
+.button:hover {
+  text-decoration: none;
+}
+
+.button:disabled,
+.button[aria-disabled='true'] {
+  opacity: 0.55;
+}
+
+/* Terracotta: one per screen, for the primary action. */
+.primary {
+  background: var(--accent-strong);
+  color: var(--on-accent);
+}
+
+.primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent-strong) 86%, var(--text));
+}
+
+.secondary {
+  border-color: var(--structure);
+  color: var(--structure);
+}
+
+.secondary:hover:not(:disabled) {
+  background: var(--surface);
+}
+
+.quiet {
+  color: var(--text);
+}
+
+.quiet:hover:not(:disabled),
+.quiet[aria-expanded='true'] {
+  background: color-mix(in srgb, var(--surface-quiet) 45%, transparent);
+}
+
+.github {
+  background: var(--github);
+  color: var(--on-github);
+}
+
+.github:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--github) 86%, var(--text));
+}
+
+/* Controls drawn on the resume sheet, which keeps its colors in every theme. */
+.page {
+  color: var(--page-control);
+}
+
+.page:hover:not(:disabled),
+.page[aria-expanded='true'] {
+  background: var(--page-hover);
+}
+
+.page:focus-visible {
+  outline-color: var(--page-control);
+}
+
+.sm {
+  height: 32px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-sm);
+}
+
+.iconOnly {
+  width: 40px;
+  padding: 0;
+}
+
+.sm.iconOnly {
+  width: 32px;
+}
+
+.spin {
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

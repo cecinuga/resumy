@@ -1,0 +1,69 @@
+.region {
+  position: fixed;
+  inset-inline: 0;
+  bottom: var(--space-5);
+  z-index: 50;
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  padding-inline: var(--space-4);
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  max-width: 480px;
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--text);
+  color: var(--bg);
+  font-size: var(--text-sm);
+  box-shadow: var(--shadow-md);
+  pointer-events: auto;
+  animation: rise var(--duration) var(--ease);
+}
+
+.message {
+  padding-block: var(--space-1);
+}
+
+.action,
+.close {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  font-weight: var(--weight-bold);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.close {
+  width: 32px;
+  justify-content: center;
+  padding: 0;
+  text-decoration: none;
+}
+
+.action:hover,
+.close:hover {
+  background: color-mix(in srgb, var(--bg) 14%, transparent);
+}
+
+.action:focus-visible,
+.close:focus-visible {
+  outline-color: var(--bg);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}

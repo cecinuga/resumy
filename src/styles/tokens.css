@@ -1,0 +1,97 @@
+/*
+ * Herbarium design tokens.
+ * The only file allowed to contain raw color values: everything else
+ * references these variables, so themes never touch components.
+ */
+
+:root {
+  --bg: #F3F0E3;            /* cream, app background */
+  --surface: #FBF9F1;       /* cards, inputs */
+  --surface-quiet: #A9BBA0; /* sage: nav rail, chips, selected states */
+  --border: #DDD8C6;
+  --text: #2B2B26;          /* charcoal, body text */
+  --text-muted: #5E6358;
+  --structure: #3F5B45;     /* moss: headings, icons, focus ring */
+  --accent: #C8643C;        /* terracotta: decorative marks only */
+  --accent-strong: #A84E2B; /* filled primary button, text links */
+  --on-accent: #F3F0E3;
+  --page: #FFFFFF;          /* the resume sheet, never themed */
+
+  /* Editing chrome drawn on the sheet: fixed, like the sheet itself */
+  --page-ink: #2B2B26;
+  --page-muted: #646A60;    /* placeholders and hints */
+  --page-control: #3F5B45;  /* handles and add buttons */
+  --page-hover: #F3F0E3;    /* editable field hover */
+  --page-guide: #C9C4B0;    /* page break guide */
+
+  /* Additions to the base palette */
+  --github: #5E4B8B;          /* heather purple: the GitHub button */
+  --on-github: #F3F0E3;
+  --control-border: #7A7F72;  /* input outlines, needs 3:1 against surfaces */
+  --overlay: rgb(43 43 38 / 0.32);
+  --shadow-color: 43 43 38;
+
+  /* Typography */
+  --font-sans: 'Nunito Sans', system-ui, sans-serif;
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-md: 16px;
+  --text-lg: 20px;
+  --text-xl: 28px;
+  --leading-body: 1.5;
+  --leading-heading: 1.2;
+  --weight-regular: 400;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Spacing (4px grid) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* Shape and depth */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 999px;
+  --shadow-sm: 0 1px 2px rgb(var(--shadow-color) / 0.06);
+  --shadow-md: 0 6px 20px rgb(var(--shadow-color) / 0.1);
+  --shadow-page: 0 1px 3px rgb(var(--shadow-color) / 0.08), 0 12px 32px rgb(var(--shadow-color) / 0.08);
+
+  /* Motion: slow and soft */
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --duration-fast: 120ms;
+  --duration: 200ms;
+
+  /* Layout */
+  --header-height: 64px;
+  --rail-width: 88px;
+  --panel-width: 320px;
+  --content-width: 1120px;
+}
+
+/* Night: the same notebook read by lamplight. */
+:root[data-theme='dark'] {
+  --bg: #1C1F1A;
+  --surface: #252923;
+  --surface-quiet: #3D4D3F;
+  --border: #373C33;
+  --text: #ECE8DA;
+  --text-muted: #B3B7A8;
+  --structure: #A8C3A0;
+  --accent: #D9845F;
+  --accent-strong: #E79C78;
+  --on-accent: #1C1F1A;
+  --page: #FFFFFF;
+
+  --github: #A496CF;
+  --on-github: #1C1F1A;
+  --control-border: #8A8F80;
+  --overlay: rgb(0 0 0 / 0.5);
+  --shadow-color: 0 0 0;
+}

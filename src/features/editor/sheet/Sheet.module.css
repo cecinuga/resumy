@@ -1,0 +1,572 @@
+/*
+ * The resume sheet. Sizes are in points, like the PDF, and come from the
+ * shared design as --r-* variables; template variants are data attributes.
+ * The sheet is paper: it keeps its colors in every app theme.
+ */
+
+.frame {
+  position: relative;
+  width: 100%;
+  max-width: var(--r-paper-width);
+  min-height: var(--r-paper-height);
+  margin: 0 auto;
+  padding: var(--r-margin);
+  border-radius: 2px;
+  background: var(--page);
+  color: var(--r-text);
+  font-family: var(--r-font);
+  font-size: var(--r-body);
+  line-height: var(--r-line-height);
+  font-variant-ligatures: none;
+  box-shadow: var(--shadow-page);
+  overflow-wrap: break-word;
+}
+
+.frame :focus-visible {
+  outline-color: var(--page-control);
+}
+
+/* ---------- Header ---------- */
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 14pt;
+  margin-bottom: var(--r-gap-section);
+}
+
+.frame[data-align='center'] .header {
+  flex-direction: column;
+  align-items: center;
+  gap: 8pt;
+  text-align: center;
+}
+
+.identity {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.frame[data-align='center'] .identity {
+  align-items: center;
+  width: 100%;
+}
+
+.name {
+  font-size: var(--r-name);
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--r-name-color);
+}
+
+.headline {
+  margin-top: 3pt;
+  font-size: var(--r-headline);
+  color: var(--r-headline-color);
+}
+
+.contacts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 6pt;
+  font-size: var(--r-small);
+  color: var(--r-muted);
+}
+
+.frame[data-align='center'] .contacts {
+  justify-content: center;
+}
+
+.contact {
+  display: inline-flex;
+  align-items: center;
+}
+
+.contact + .contact::before {
+  content: '·';
+  margin: 0 0.75em;
+  color: var(--r-rule);
+}
+
+.divider {
+  width: 100%;
+  border-bottom: 0.75pt solid var(--r-rule);
+}
+
+.frame[data-align='center'] .divider {
+  margin-top: 4pt;
+}
+
+.photo {
+  flex-shrink: 0;
+  width: calc(var(--r-name) * 2.6);
+  height: calc(var(--r-name) * 2.6);
+  border-radius: 6pt;
+  object-fit: cover;
+}
+
+.frame[data-photo='circle'] .photo {
+  border-radius: 50%;
+}
+
+/* ---------- Sections ---------- */
+
+.section {
+  position: relative;
+  margin-bottom: var(--r-gap-section);
+}
+
+.headingBox {
+  position: relative;
+  margin-bottom: calc(var(--r-gap-block) * 0.8);
+}
+
+.frame[data-heading='rule'] .headingBox {
+  padding-bottom: 2pt;
+  border-bottom: 0.75pt solid var(--r-rule);
+}
+
+.frame[data-heading='bar'] .headingBox {
+  padding-left: 6pt;
+  border-left: 3pt solid var(--r-accent);
+}
+
+.frame[data-heading='underline'] .headingBox::after {
+  content: '';
+  display: block;
+  width: 28pt;
+  margin-top: 3pt;
+  border-bottom: 1.5pt solid var(--r-accent);
+}
+
+.heading {
+  font-size: var(--r-heading);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--r-heading-color);
+}
+
+.frame[data-heading-case='upper'] .heading {
+  text-transform: uppercase;
+}
+
+/* ---------- Blocks ---------- */
+
+.paragraph {
+  display: block;
+  margin-bottom: var(--r-gap-block);
+  white-space: pre-wrap;
+}
+
+.entry {
+  margin-bottom: var(--r-gap-block);
+}
+
+.entryRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12pt;
+}
+
+.entryTitle {
+  min-width: 0;
+  font-weight: 700;
+}
+
+.entrySubtitle {
+  min-width: 0;
+  color: var(--r-subtitle-color);
+}
+
+.frame[data-subtitle='italic'] .entrySubtitle {
+  font-style: italic;
+}
+
+.entryMeta {
+  flex-shrink: 0;
+  max-width: 45%;
+  font-size: var(--r-small);
+  color: var(--r-muted);
+  text-align: right;
+}
+
+.entryMetaLine {
+  display: flex;
+  flex-wrap: wrap;
+  font-size: var(--r-small);
+  color: var(--r-muted);
+}
+
+.bullets {
+  margin-top: calc(var(--r-gap-item) * 2);
+  padding: 0;
+  list-style: none;
+}
+
+.bullet {
+  position: relative;
+  display: flex;
+  margin-bottom: var(--r-gap-item);
+}
+
+.bullet::before {
+  content: '•';
+  flex-shrink: 0;
+  width: 10pt;
+  color: var(--r-accent);
+}
+
+.bulletText {
+  flex: 1;
+  min-width: 0;
+}
+
+.tags {
+  margin-bottom: calc(var(--r-gap-item) * 2);
+}
+
+.tagLabel {
+  font-weight: 700;
+}
+
+/* ---------- Editing ---------- */
+
+.editable {
+  min-width: 2ch;
+  border-radius: 2px;
+  outline-offset: 2px;
+  white-space: pre-wrap;
+  cursor: text;
+  transition: background-color var(--duration-fast) var(--ease);
+}
+
+.editable:hover {
+  background: var(--page-hover);
+}
+
+.editable:focus {
+  outline: 2px solid var(--page-control);
+  background: transparent;
+}
+
+.editable:empty::before {
+  content: attr(data-placeholder);
+  color: var(--page-muted);
+  font-style: normal;
+  font-weight: 400;
+  text-transform: none;
+  pointer-events: none;
+}
+
+span.editable {
+  display: inline-block;
+}
+
+/* Tools appear around the element under the pointer or keyboard focus. */
+.tools {
+  position: absolute;
+  top: 0;
+  right: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-right: 6px;
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease);
+}
+
+.block,
+.bulletRow,
+.sectionEditable {
+  position: relative;
+}
+
+.block:hover > .tools,
+.block:focus-within > .tools,
+.bulletRow:hover > .tools,
+.bulletRow:focus-within > .tools {
+  opacity: 1;
+}
+
+.handle {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--page-muted);
+  cursor: grab;
+  touch-action: none;
+}
+
+.handle:hover {
+  background: var(--page-hover);
+  color: var(--page-control);
+}
+
+.handle:active {
+  cursor: grabbing;
+}
+
+.handle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.iconTool {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--page-muted);
+}
+
+.iconTool:hover {
+  background: var(--page-hover);
+  color: var(--page-control);
+}
+
+.iconTool svg {
+  width: 16px;
+  height: 16px;
+}
+
+.headingRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8pt;
+}
+
+.sectionTools {
+  display: flex;
+  flex-shrink: 0;
+  gap: 2px;
+  opacity: 0;
+  font-family: var(--font-sans);
+  transition: opacity var(--duration-fast) var(--ease);
+}
+
+.sectionEditable:hover .sectionTools,
+.sectionEditable:focus-within .sectionTools {
+  opacity: 1;
+}
+
+.addRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: 2pt;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+}
+
+.addRow > * {
+  opacity: 0.85;
+}
+
+.dropZone {
+  min-height: 12pt;
+  border-radius: 4px;
+  transition: background-color var(--duration-fast) var(--ease);
+}
+
+.dropZone[data-over] {
+  background: var(--page-hover);
+}
+
+.emptyHint {
+  padding: 6pt 0;
+  color: var(--page-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+}
+
+[data-dragging] {
+  opacity: 0.35;
+}
+
+.dragGhost {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 420px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  box-shadow: var(--shadow-md);
+  cursor: grabbing;
+}
+
+.dragGhost span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dragGhost svg {
+  flex-shrink: 0;
+  color: var(--structure);
+}
+
+/* Tags while editing: chips that can be dragged between groups. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4pt;
+}
+
+.tagsEditable {
+  display: grid;
+  gap: 3pt;
+  margin-bottom: calc(var(--r-gap-item) * 2);
+}
+
+.tagLabelField {
+  font-weight: 700;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  padding: 1pt 2pt 1pt 1pt;
+  border: 1px solid var(--page-guide);
+  border-radius: var(--radius-full);
+  font-size: var(--r-small);
+}
+
+.chip .handle {
+  width: 18px;
+  height: 18px;
+}
+
+.chip .handle svg,
+.chip .iconTool svg {
+  width: 13px;
+  height: 13px;
+}
+
+.chip .iconTool {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-full);
+}
+
+.tagInput {
+  width: 9em;
+  padding: 1pt 6pt;
+  border: 1px dashed var(--page-muted);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--page-ink);
+  font-size: var(--r-small);
+}
+
+.tagInput::placeholder {
+  color: var(--page-muted);
+}
+
+.tagInput:focus {
+  border-style: solid;
+  outline: 2px solid var(--page-control);
+  outline-offset: 1px;
+}
+
+/* Photo while editing */
+.photoSlot {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.photoActions {
+  position: absolute;
+  inset: auto 0 -6px 0;
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease);
+}
+
+.photoSlot:hover .photoActions,
+.photoSlot:focus-within .photoActions {
+  opacity: 1;
+}
+
+.photoActions .iconTool {
+  background: var(--page);
+  box-shadow: var(--shadow-sm);
+}
+
+.headerTools {
+  position: absolute;
+  top: calc(var(--r-margin) / 2 - 14px);
+  right: calc(var(--r-margin) / 2);
+  display: flex;
+  gap: var(--space-1);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+}
+
+/* Approximate page ends; the PDF engine decides the exact breaks. */
+.pageBreak {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 1px dashed var(--page-guide);
+  pointer-events: none;
+}
+
+.pageBreak span {
+  position: absolute;
+  right: 8px;
+  top: -9px;
+  padding: 0 6px;
+  background: var(--page);
+  color: var(--page-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+}
+
+/* Touch screens have no hover: keep the tools visible. */
+@media (hover: none) {
+  .tools,
+  .sectionTools,
+  .photoActions {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 720px) {
+  .frame {
+    min-height: 0;
+    padding: 28px 20px 28px 36px;
+  }
+
+  .headerTools {
+    top: 4px;
+    right: 8px;
+  }
+
+  .pageBreak {
+    display: none;
+  }
+}
