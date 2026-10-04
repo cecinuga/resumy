@@ -2,7 +2,7 @@
 
 **A calm place to write your resume.** Resumy is a free, open-source resume builder. Bring the resume you already have or start from a blank page, edit it right on the page, pick a look you like and download a PDF that's ready for any job application.
 
-**[Open Resumy →](https://resumy-4464b.web.app)**
+**[Open Resumy →](https://resumysh.web.app)**
 
 ![The Resumy editor, with the templates panel open next to a resume](.github/screenshots/editor.png)
 
