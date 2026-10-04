@@ -1,77 +1,78 @@
 # Resumy
 
-A free, open-source resume builder that runs entirely in your browser. Upload the resume you already have or start from a blank page, edit it in place, and download a PDF that applicant tracking systems (ATS) can read.
+**A calm place to write your resume.** Resumy is a free, open-source resume builder. Bring the resume you already have or start from a blank page, edit it right on the page, pick a look you like and download a PDF that's ready for any job application.
 
-- **Free, for good.** No accounts, no ads, no paywalled templates.
-- **Private by design.** Your resume never leaves your browser: PDFs are read and written on your device, and the draft is saved only in this browser's storage.
-- **ATS-friendly.** Every template is a single column of real, selectable text with standard headings, embedded Unicode fonts and no ligatures, so parsers read it in the right order.
+**[Open Resumy →](https://resumy-4464b.web.app)**
 
-## Features
+![The Resumy editor, with the templates panel open next to a resume](.github/screenshots/editor.png)
 
-- **Two ways to start:** upload an existing PDF (validated by its `%PDF-` signature, up to 10 MB) or create an empty resume.
-- **PDF import:** text is extracted with pdf.js and mapped to name, contact details, summary, experience, education, skills, languages and any other section. Headings are recognised in English, Italian, Spanish, French and German.
-- **Edit in place:** type directly on the page, rename sections, add bullet lists, and drag entries, bullets or skills between sections. One photo is optional.
-- **Customize:** five templates (Professional, Classic, Modern, Compact, Elegant), accent colors, five self-hosted fonts, text size, A4 or US Letter, and section order and visibility.
-- **Download a PDF** at any time from the right side of the header.
-- **Undo and redo**, autosave, and light and dark themes.
+## Why Resumy
 
-## Getting started
+- **Free, for good.** No accounts, no ads, no paid templates, no watermark.
+- **Private by design.** Your resume never leaves your device, and there is nothing to sign up for.
+- **Read correctly by hiring software.** Many companies screen resumes with applicant tracking systems (ATS) before a person sees them. Every Resumy template keeps your resume as real, selectable text in a clean single column with familiar headings, the layout these systems read best.
 
-Requires Node.js 22.13 or newer.
+## How to use it
 
-```bash
-npm install
-npm run dev
-```
+### 1. Start from your resume or from scratch
 
-| Script | What it does |
-| --- | --- |
-| `npm run dev` | Starts the Vite dev server |
-| `npm run build` | Type-checks and builds to `dist/` |
-| `npm run preview` | Serves the production build locally |
-| `npm test` | Runs the unit and integration tests (Vitest) |
-| `npm run lint` | Lints with oxlint |
-| `npm run deploy` | Builds and deploys to Firebase Hosting |
+Upload the resume you already have as a PDF, and Resumy lays out its content for you to edit: your name and contact details, summary, experience, education, skills and any other section. Or start with an empty resume that already has the sections recruiters expect.
 
-## Analytics and deployment
+![The start page: upload your resume or start from scratch](.github/screenshots/home.png)
 
-The app is hosted on Firebase Hosting (project `resumy-4464b`, see `.firebaserc`). `firebase.json` sets up the single-page-app rewrite, long-lived caching for hashed assets and security headers, including a Content-Security-Policy that only allows the app itself plus Firebase Analytics.
+### 2. Write on the page
 
-Anonymous usage counts (page views, new resumes, uploads and downloads) go to Firebase Analytics; resume content is never sent. Advertising features are off, and visitors who send Global Privacy Control or Do Not Track are not tracked. To enable it, copy `.env.example` to `.env.local` and fill in the web app config from the Firebase console (*Project settings → Your apps*). Analytics stays off while the API key, app ID or measurement ID are missing.
+Click any text to change it. Add bullets, entries and new sections where you need them, and drag an item by its dotted handle to move it, even into another section. You can rename any section and add one photo if you want one.
 
-```bash
-npm install -g firebase-tools
-firebase login
-npm run deploy
-```
+Removed something by mistake? Every change can be undone, from the toolbar or with <kbd>Ctrl</kbd>+<kbd>Z</kbd> (<kbd>⌘</kbd>+<kbd>Z</kbd> on a Mac).
 
-## How it works
+![Editing a bullet point in place, with handles to move or remove each item](.github/screenshots/editing.png)
 
-```
-src/
-├── app/            App shell, minimal History API router, theme
-├── components/     Reusable UI: Button, Dialog, Drawer, Menu, Toast…
-├── features/
-│   ├── home/       Start page: upload or start from scratch
-│   ├── editor/     Editor page, side panels and the editable sheet (drag and drop)
-│   ├── import/     PDF validation, text extraction (pdf.js) and resume parsing
-│   ├── export/     PDF rendering with react-pdf
-│   └── resume/     The resume model, templates, state with undo history, storage
-├── lib/            Small utilities (analytics, contrast, storage…)
-└── styles/         Design tokens and global styles
-```
+### 3. Make it yours
 
-- **One model, two renderers.** Templates are plain data (`features/resume/design/templates.ts`). The editable sheet and the PDF read the same resolved sizes and colors, so the preview matches the download.
-- **State** lives in a reducer with an undo history. New ids are created outside the reducer, which keeps it pure. Drag and drop previews moves locally and commits a single action on drop.
-- **Heavy code loads on demand:** pdf.js loads when you upload, react-pdf when you download, and the editor when you open it.
-- **Round-trip tests** render resumes in every template to PDF, then parse them back. This checks both the exported text and the importer.
+Use the panels on the left to shape how your resume looks:
 
-## Design
+- **Templates:** choose from Professional, Classic, Modern, Compact and Elegant.
+- **Style:** pick an accent color, a font, the text size, and A4 or US Letter paper.
+- **Sections:** reorder sections, hide the ones you don't need for this application, or add new ones such as projects, certifications, languages, volunteering, awards or interests.
 
-The visual design system ("Herbarium": calm, organic, like a botanist's notebook) lives in `src/styles/tokens.css`, the only place where interface colors are defined. Components use plain CSS Modules, Nunito Sans and lucide icons. `src/styles/tokens.test.ts` checks that every text and background pair in use meets WCAG AA, in both themes. Resume accent colors live in `features/resume/design/palette.ts` and are tested against white paper, because they are embedded in the PDF.
+![The five templates: Professional, Classic, Modern, Compact and Elegant](.github/screenshots/templates.png)
+
+Switch to **Preview** at any time to read your resume without the editing controls.
+
+### 4. Download your PDF
+
+Press **Download PDF** in the top right corner. The file is named after you, ready to attach to an application.
+
+## Your resume stays with you
+
+- **Nothing is uploaded.** Your PDF is read, and your new one is created, inside your browser.
+- **Your work is saved as you type**, in this browser only. Come back later and pick up where you left off with **Continue editing**, or press **Start over** to clear it.
+- **Keep your PDF.** Clearing your browser data also deletes your draft. The PDF you download is your copy: upload it to Resumy again whenever you want to update it.
+- **Only anonymous counts.** Resumy counts visits, new resumes, uploads and downloads to know whether it's useful. It never sees what you write, and it doesn't count you at all if your browser asks sites not to track you.
+
+## Light or dark, on any screen
+
+Resumy follows your device's light or dark setting, and you can switch it from the header. It works on phones and tablets too: the panels slide up from the bottom of the screen.
+
+![Resumy in dark mode, with the style panel open](.github/screenshots/dark.png)
+
+<p align="center">
+  <img src=".github/screenshots/mobile.png" width="560" alt="Resumy on a phone: the start page, and the style panel in the editor">
+</p>
+
+## Tips for importing a resume
+
+- Resumy reads PDFs that contain real text, like the ones exported from Word, Google Docs or another resume builder. A scanned or photographed resume is just a picture, so there's nothing to read: start from scratch instead.
+- Section headings are recognized in English, Italian, Spanish, French and German.
+- Resumes with two columns or unusual layouts may need some tidying after the import. Give everything a quick read before you download.
+
+## Feedback and contributing
+
+Found a bug or have an idea? [Open an issue](https://github.com/cecinuga/resumy/issues). If you want to run Resumy yourself or help build it, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-[MIT](LICENSE). 
+[MIT](LICENSE): free to use, change and share.
 
-Made with love by [cecinuga](https://github.com/cecinuga).
+Made with love by Cecinuga ❤️ · [GitHub](https://github.com/cecinuga) · [LinkedIn](https://www.linkedin.com/in/matteommarchetti) · [Blog](https://cecinuga.dev)
