@@ -86,7 +86,8 @@
   align-items: center;
 }
 
-.contact + .contact::before {
+/* After each contact but the last: a wrapped line ends with the dot, as in the PDF, and never starts with one. */
+.contact:not(:last-of-type)::after {
   content: '·';
   margin: 0 0.75em;
   color: var(--r-rule);
@@ -546,19 +547,49 @@ span.editable {
   font-size: var(--text-xs);
 }
 
-/* Touch screens have no hover: keep the tools visible. */
+/*
+ * Touch screens have no hover: the tools show for the item being edited
+ * only, and stay a moment after it loses focus so a tap on them still lands.
+ * A bullet's handle sits on its right, clear of the tools of its entry.
+ */
 @media (hover: none) {
   .tools,
-  .sectionTools,
+  .sectionTools {
+    visibility: hidden;
+    transition:
+      opacity var(--duration-fast) var(--ease),
+      visibility 0s linear 300ms;
+  }
+
+  .block:focus-within > .tools,
+  .bulletRow:focus-within > .tools,
+  .headingBox:focus-within .sectionTools {
+    visibility: visible;
+    opacity: 1;
+    transition-delay: 0s;
+  }
+
+  .bulletRow > .tools {
+    right: auto;
+    left: 100%;
+    padding: 0 0 0 2px;
+  }
+
   .photoActions {
     opacity: 1;
   }
 }
 
 @media (max-width: 720px) {
+  /* The left margin fits the tools of a block. */
   .frame {
     min-height: 0;
-    padding: 28px 20px 28px 36px;
+    padding: 28px 16px 28px 30px;
+  }
+
+  .addRow > button,
+  .addRow > * > [aria-haspopup] {
+    height: 28px;
   }
 
   .headerTools {
@@ -568,5 +599,12 @@ span.editable {
 
   .pageBreak {
     display: none;
+  }
+}
+
+@media (max-width: 720px) and (hover: none) {
+  /* Room for the handle of the bullet being edited. */
+  .frame {
+    padding-right: 26px;
   }
 }
