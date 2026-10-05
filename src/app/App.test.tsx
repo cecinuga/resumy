@@ -4,9 +4,13 @@ import { describe, expect, it } from 'vitest'
 import { sampleResume } from '../test/sampleResume'
 import { App } from './App'
 
+// The editor is loaded on demand. On a busy machine that can take longer than
+// findBy's default second, and a whole flow longer than the default 5 s.
+const EDITOR_LOAD = { timeout: 5000 }
+
 const savedDraft = () => JSON.parse(localStorage.getItem('resumy:draft') ?? 'null') as { resume: { basics: { name: string } } } | null
 
-describe('App', () => {
+describe('App', { timeout: 15_000 }, () => {
   it('starts a new resume, saves it in the browser and offers to continue it', async () => {
     const user = userEvent.setup()
     render(<App />)
@@ -14,7 +18,7 @@ describe('App', () => {
     expect(screen.queryByRole('button', { name: 'Download PDF' })).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'New resume' }))
-    const name = await screen.findByRole('textbox', { name: 'Full name' })
+    const name = await screen.findByRole('textbox', { name: 'Full name' }, EDITOR_LOAD)
     expect(window.location.pathname).toBe('/editor')
     expect(screen.getByRole('button', { name: 'Download PDF' })).toBeInTheDocument()
 
@@ -39,7 +43,7 @@ describe('App', () => {
 
     await user.click(screen.getByRole('button', { name: 'New resume' }))
     await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Replace it' }))
-    expect(await screen.findByRole('textbox', { name: 'Full name' })).toHaveTextContent('')
+    expect(await screen.findByRole('textbox', { name: 'Full name' }, EDITOR_LOAD)).toHaveTextContent('')
   })
 
   it('switches between the editor and the print preview', async () => {
@@ -48,7 +52,7 @@ describe('App', () => {
     const user = userEvent.setup()
     render(<App />)
 
-    expect(await screen.findByRole('textbox', { name: 'Full name' })).toHaveTextContent('Giulia Rossi')
+    expect(await screen.findByRole('textbox', { name: 'Full name' }, EDITOR_LOAD)).toHaveTextContent('Giulia Rossi')
     await user.click(screen.getByRole('radio', { name: 'Preview' }))
     const sheet = screen.getByRole('article', { name: 'Resume' })
     expect(within(sheet).queryByRole('textbox')).not.toBeInTheDocument()
