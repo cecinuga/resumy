@@ -1,4 +1,5 @@
 import { pdf } from '@react-pdf/renderer'
+import { embedResume } from '../resume/model/embed'
 import type { Resume } from '../resume/model/types'
 import { registerPdfFonts } from './pdfFonts'
 import { ResumeDocument } from './ResumeDocument'
@@ -15,8 +16,14 @@ function fontUrl(fileName: string, packageName: string): string {
   return url
 }
 
-/** Renders the resume to a PDF blob. Loaded on demand: react-pdf is large. */
+/**
+ * Renders the resume to a PDF blob, with the resume itself stored inside so
+ * that uploading the PDF again restores it exactly. Loaded on demand:
+ * react-pdf is large.
+ */
 export async function renderResumePdf(resume: Resume): Promise<Blob> {
   registerPdfFonts(fontUrl)
-  return pdf(<ResumeDocument resume={resume} />).toBlob()
+  const rendered = await pdf(<ResumeDocument resume={resume} />).toBlob()
+  const bytes = await embedResume(new Uint8Array(await rendered.arrayBuffer()), resume)
+  return new Blob([bytes], { type: 'application/pdf' })
 }

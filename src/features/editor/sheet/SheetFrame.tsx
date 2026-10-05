@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react'
+import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react'
 import { fontStack } from '../../resume/design/fonts'
 import type { ResolvedDesign } from '../../resume/design/resolve'
+import type { PageBreak } from './pages'
 import styles from './Sheet.module.css'
 
 const PX_TO_PT = 0.75
@@ -33,61 +34,74 @@ function frameStyle({ font, sizes, colors, spacing, margin, lineHeight, paper }:
 }
 
 /**
- * Where pages would end, in points from the top of the sheet. Each PDF page
- * holds its height minus the top and bottom margins. Only meaningful when the
- * sheet is shown at its real width.
+ * Where each page break falls on the editable sheet, in pixels: just above
+ * the field the next page starts with. Only while the sheet is shown at the
+ * width of the paper, so lines wrap as in the PDF.
  */
-function usePageBreaks(content: RefObject<HTMLElement | null>, design: ResolvedDesign): number[] {
-  const [breaks, setBreaks] = useState<number[]>([])
-  const { margin, paper } = design
+function useBreakLines(content: RefObject<HTMLElement | null>, breaks: readonly PageBreak[], paperWidth: number): number[] {
+  const [lines, setLines] = useState<number[]>([])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const element = content.current
     if (!element) return
-    const measure = () => {
-      const frame = element.parentElement
-      const fullWidth = frame !== null && frame.offsetWidth * PX_TO_PT >= paper.width - 1
-      const contentBottom = margin + element.offsetHeight * PX_TO_PT
-      const perPage = paper.height - 2 * margin
+    const place = () => {
+      const fullWidth = (element.parentElement?.offsetWidth ?? 0) * PX_TO_PT >= paperWidth - 1
+      const origin = element.getBoundingClientRect().top
       const next: number[] = []
-      for (let top = margin + perPage; fullWidth && top < contentBottom; top += perPage) next.push(top)
-      setBreaks((current) => (current.join() === next.join() ? current : next))
+      for (const { field, offset } of fullWidth ? breaks : []) {
+        const target = field && element.querySelector(`[data-field="${CSS.escape(field)}"]`)
+        if (target) next.push(Math.round(target.getBoundingClientRect().top - origin + offset))
+      }
+      setLines((current) => (current.join() === next.join() ? current : next))
     }
-    measure()
-    const observer = new ResizeObserver(measure)
+    place()
+    const observer = new ResizeObserver(place)
     observer.observe(element)
-    if (element.parentElement) observer.observe(element.parentElement)
     return () => observer.disconnect()
-  }, [content, margin, paper.height, paper.width])
+  })
 
-  return breaks
+  return lines
 }
 
 interface SheetFrameProps {
   design: ResolvedDesign
   children: ReactNode
+  /** Page breaks to mark on the sheet while editing (see pages.ts). */
+  breaks?: readonly PageBreak[]
+  /**
+   * The exact page, as printed: real paper width at every screen size,
+   * for the preview and for measuring it.
+   */
+  exact?: boolean
+  /** One page of the preview, cut to the paper's height. */
+  page?: boolean
+  contentRef?: RefObject<HTMLDivElement | null>
+  label?: string
 }
 
 /** The paper: size, margins and template variants of the resume. */
-export function SheetFrame({ design, children }: SheetFrameProps) {
-  const contentRef = useRef<HTMLDivElement>(null)
-  const breaks = usePageBreaks(contentRef, design)
+export function SheetFrame({ design, children, breaks = [], exact, page, contentRef, label = 'Resume' }: SheetFrameProps) {
+  const ownRef = useRef<HTMLDivElement>(null)
+  const content = contentRef ?? ownRef
+  const lines = useBreakLines(content, breaks, design.paper.width)
   const { template } = design
 
   return (
     <article
       className={styles.frame}
-      aria-label="Resume"
+      aria-label={label}
       style={frameStyle(design)}
+      data-exact={exact || page || undefined}
+      data-page={page || undefined}
       data-align={template.header.align}
       data-heading={template.heading.decoration}
       data-heading-case={template.heading.uppercase ? 'upper' : undefined}
       data-subtitle={template.entry.subtitleStyle}
       data-photo={template.photoShape}
     >
-      <div ref={contentRef}>{children}</div>
-      {breaks.map((top, index) => (
-        <div key={top} className={styles.pageBreak} style={{ top: `${top}pt` }} aria-hidden>
+      <div ref={content}>{children}</div>
+      {lines.map((top, index) => (
+        <div key={top} className={styles.pageBreak} style={{ top: `calc(var(--r-margin) + ${top}px - 4px)` }} aria-hidden>
           <span>Page {index + 2}</span>
         </div>
       ))}

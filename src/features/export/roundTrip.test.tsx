@@ -6,6 +6,8 @@ import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { sampleDesign, sampleResume } from '../../test/sampleResume'
 import { createEmptyResume, createEntry, createItem, createListBlock, createSection, createTextBlock } from '../resume/model/factories'
 import { parseResume } from '../import/parseResume'
+import { embedResume, readEmbeddedResume } from '../resume/model/embed'
+import { printableResume } from '../resume/model/printable'
 import { extractTextLines } from '../import/pdfExtract'
 import type { Resume } from '../resume/model/types'
 import { registerPdfFonts } from './pdfFonts'
@@ -21,6 +23,18 @@ beforeAll(async () => {
 async function renderAndRead(resume: Resume) {
   const buffer = await renderToBuffer(<ResumeDocument resume={resume} />)
   return extractTextLines(pdfjs, new Uint8Array(buffer))
+}
+
+/** The PDF as Resumy exports it: rendered, with the resume stored inside. */
+async function exportPdf(resume: Resume, printed: Resume = resume) {
+  return embedResume(new Uint8Array(await renderToBuffer(<ResumeDocument resume={printed} />)), resume)
+}
+
+/** The resume restored from a PDF, if the PDF still prints what was stored. */
+async function restore(pdf: Uint8Array) {
+  const embedded = await readEmbeddedResume(pdf)
+  const lines = await extractTextLines(pdfjs, pdf.slice())
+  return embedded?.matches(lines.map((line) => line.text).join('\n')) ? embedded.resume : null
 }
 
 /** The addresses the links on the first page open, in reading order. */
@@ -159,6 +173,30 @@ describe('exported PDF', () => {
       expect(await renderLinks(resume)).toContain('https://giuliarossi.dev/')
     },
   )
+
+  it.each(['professional', 'classic', 'modern', 'compact', 'elegant'] as const)(
+    'carries the resume inside, so uploading it restores it exactly (%s)',
+    async (template) => {
+      const original = sampleResume({ template, accent: '#7A2E3A', textSize: 'small' })
+      // A bare city, which reading the layout alone would take for part of the company.
+      const job = original.sections[1]!.blocks[0]
+      if (job?.type === 'entry') job.location = 'Milan'
+      original.sections.push({ ...createSection('Hidden notes', [createTextBlock('Not for this application')]), hidden: true })
+
+      const pdf = await exportPdf(original)
+      // Still an ordinary PDF with the same text.
+      expect((await extractTextLines(pdfjs, pdf.slice())).map((line) => line.text)).toContain('Giulia Rossi')
+      // Exactly what the PDF prints: hidden sections stay out of it.
+      expect(await restore(pdf)).toEqual(printableResume(original))
+    },
+  )
+
+  it('reads the layout instead when the PDF was edited after export', async () => {
+    const original = sampleResume()
+    const edited = sampleResume()
+    edited.basics.headline = 'Staff Frontend Engineer'
+    expect(await restore(await exportPdf(original, edited))).toBeNull()
+  })
 
   it('renders sparse resumes without stray text nodes', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
