@@ -1,6 +1,7 @@
 import { Document, Image, Link, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
-import { Fragment } from 'react'
+import { Fragment, type ComponentProps } from 'react'
 import { resolveDesign, type ResolvedDesign } from '../resume/design/resolve'
+import { linkify } from '../resume/model/links'
 import { contactEntries, printableResume } from '../resume/model/printable'
 import type { Block, EntryBlock, Resume, TextItem } from '../resume/model/types'
 import { extendedFamily } from './pdfFonts'
@@ -53,6 +54,42 @@ interface PartProps {
 // react-pdf rejects bare strings outside <Text>, so conditions below are
 // explicit booleans: `{name && <Text/>}` would render '' for an empty name.
 
+/**
+ * Between two runs of text (a link and the bracket after it) or before a
+ * double space, react-pdf may break the line and add a hyphen that is not in
+ * the text. Its line breaker treats 10000 as an infinite penalty, which rules
+ * those breaks out; lines still break at spaces.
+ */
+const NO_HYPHEN_BREAKS = 10_000
+
+/** Sits between contacts and between date and location; it stays at the end of a line, never starts one. */
+const SEPARATOR = '\u00a0\u00a0·\u00a0 '
+
+/** Text that may hold links; see NO_HYPHEN_BREAKS. */
+function Prose(props: ComponentProps<typeof Text>) {
+  return <Text hyphenationPenalty={NO_HYPHEN_BREAKS} {...props} />
+}
+
+/**
+ * The text with its web addresses and emails clickable. Links keep the color
+ * of the text around them (react-pdf draws them blue and underlined).
+ */
+function Linked({ text, color }: { text: string; color: string }) {
+  return (
+    <>
+      {linkify(text).map((part, index) =>
+        part.href ? (
+          <Link key={index} src={part.href} style={{ color, textDecoration: 'none' }}>
+            {part.text}
+          </Link>
+        ) : (
+          part.text
+        ),
+      )}
+    </>
+  )
+}
+
 function Header({ resume, design, styles }: PartProps & { resume: Resume }) {
   const { basics } = resume
   const contacts = contactEntries(basics)
@@ -63,10 +100,10 @@ function Header({ resume, design, styles }: PartProps & { resume: Resume }) {
         {basics.name !== '' && <Text style={styles.name}>{basics.name}</Text>}
         {basics.headline !== '' && <Text style={styles.headline}>{basics.headline}</Text>}
         {contacts.length > 0 && (
-          <Text style={styles.contacts}>
+          <Prose style={styles.contacts}>
             {contacts.map((contact, index) => (
               <Fragment key={contact.key}>
-                {index > 0 && <Text style={styles.separator}>{'  ·  '}</Text>}
+                {index > 0 && <Text style={styles.separator}>{SEPARATOR}</Text>}
                 {contact.href ? (
                   <Link src={contact.href} style={styles.link}>
                     {contact.text}
@@ -76,7 +113,7 @@ function Header({ resume, design, styles }: PartProps & { resume: Resume }) {
                 )}
               </Fragment>
             ))}
-          </Text>
+          </Prose>
         )}
       </View>
       {design.template.header.divider && <View style={styles.divider} />}
@@ -100,51 +137,70 @@ function PdfBlock({ block, design, styles }: PartProps & { block: Block }) {
     case 'entry':
       return <Entry entry={block} design={design} styles={styles} />
     case 'text':
-      return <Text style={styles.paragraph}>{block.text}</Text>
+      return (
+        <Prose style={styles.paragraph}>
+          <Linked text={block.text} color={design.colors.text} />
+        </Prose>
+      )
     case 'list':
-      return <Bullets items={block.items} styles={styles} />
+      return <Bullets items={block.items} design={design} styles={styles} />
     case 'tags':
       return (
-        <Text style={styles.tags}>
+        <Prose style={styles.tags}>
           {block.label !== '' && <Text style={styles.tagLabel}>{`${block.label}: `}</Text>}
-          {block.items.map((item) => item.text).join(', ')}
-        </Text>
+          <Linked text={block.items.map((item) => item.text).join(', ')} color={design.colors.text} />
+        </Prose>
       )
   }
 }
 
 function Entry({ entry, design, styles }: PartProps & { entry: EntryBlock }) {
+  const { colors } = design
   const datesRight = design.template.entry.datePlacement === 'right'
-  const meta = [entry.date, entry.location].filter(Boolean).join('  ·  ')
+  const meta = [entry.date, entry.location].filter(Boolean).join(SEPARATOR)
   return (
     <View style={styles.entry}>
       <View wrap={false}>
         {(entry.title !== '' || (datesRight && entry.date !== '')) && (
           <View style={styles.entryRow}>
-            <Text style={styles.entryTitle}>{entry.title}</Text>
+            <Prose style={styles.entryTitle}>
+              <Linked text={entry.title} color={colors.text} />
+            </Prose>
             {datesRight && entry.date !== '' && <Text style={styles.entryMeta}>{entry.date}</Text>}
           </View>
         )}
         {(entry.subtitle !== '' || (datesRight && entry.location !== '')) && (
           <View style={styles.entryRow}>
-            <Text style={styles.entrySubtitle}>{entry.subtitle}</Text>
-            {datesRight && entry.location !== '' && <Text style={styles.entryMeta}>{entry.location}</Text>}
+            <Prose style={styles.entrySubtitle}>
+              <Linked text={entry.subtitle} color={colors.subtitle} />
+            </Prose>
+            {datesRight && entry.location !== '' && (
+              <Prose style={styles.entryMeta}>
+                <Linked text={entry.location} color={colors.muted} />
+              </Prose>
+            )}
           </View>
         )}
-        {!datesRight && meta !== '' && <Text style={styles.entryMetaLine}>{meta}</Text>}
+        {!datesRight && meta !== '' && (
+          <Prose style={styles.entryMetaLine}>
+            <Linked text={meta} color={colors.muted} />
+          </Prose>
+        )}
       </View>
-      {entry.items.length > 0 && <Bullets items={entry.items} styles={styles} />}
+      {entry.items.length > 0 && <Bullets items={entry.items} design={design} styles={styles} />}
     </View>
   )
 }
 
-function Bullets({ items, styles }: { items: readonly TextItem[]; styles: Styles }) {
+function Bullets({ items, design, styles }: PartProps & { items: readonly TextItem[] }) {
   return (
     <View style={styles.bullets}>
       {items.map((item) => (
         <View key={item.id} style={styles.bullet} wrap={false}>
           <Text style={styles.bulletMark}>•</Text>
-          <Text style={styles.bulletText}>{item.text}</Text>
+          <Prose style={styles.bulletText}>
+            <Linked text={item.text} color={design.colors.text} />
+          </Prose>
         </View>
       ))}
     </View>

@@ -42,7 +42,7 @@ Switch to **Preview** at any time to read your resume without the editing contro
 
 ### 4. Download your PDF
 
-Press **Download PDF** in the top right corner. The file is named after you, ready to attach to an application.
+Press **Download PDF** in the top right corner. The file is named after you, ready to attach to an application. Web addresses and emails in it, from your contact details to a link in a bullet, are clickable.
 
 ## Your resume stays with you
 

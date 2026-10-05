@@ -1,3 +1,4 @@
+import { toHref } from './links'
 import type { Basics, Block, Resume, Section } from './types'
 
 /**
@@ -73,11 +74,4 @@ export function contactEntries(basics: Basics): { key: string; text: string; hre
     entries.push({ key: link.id, text: link.text, href: toHref(link.text) })
   }
   return entries
-}
-
-/** "linkedin.com/in/jane" -> "https://linkedin.com/in/jane"; anything odd gets no link. */
-export function toHref(text: string): string | undefined {
-  const value = text.trim()
-  if (/^https?:\/\//i.test(value)) return value
-  return /^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(value) ? `https://${value}` : undefined
 }

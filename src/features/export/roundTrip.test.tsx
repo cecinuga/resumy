@@ -4,7 +4,7 @@ import path from 'node:path'
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { sampleDesign, sampleResume } from '../../test/sampleResume'
-import { createEmptyResume, createEntry, createSection } from '../resume/model/factories'
+import { createEmptyResume, createEntry, createItem, createListBlock, createSection, createTextBlock } from '../resume/model/factories'
 import { parseResume } from '../import/parseResume'
 import { extractTextLines } from '../import/pdfExtract'
 import type { Resume } from '../resume/model/types'
@@ -21,6 +21,14 @@ beforeAll(async () => {
 async function renderAndRead(resume: Resume) {
   const buffer = await renderToBuffer(<ResumeDocument resume={resume} />)
   return extractTextLines(pdfjs.getDocument, new Uint8Array(buffer))
+}
+
+/** The addresses the links on the first page open, in reading order. */
+async function renderLinks(resume: Resume) {
+  const buffer = await renderToBuffer(<ResumeDocument resume={resume} />)
+  const page = await (await pdfjs.getDocument({ data: new Uint8Array(buffer) }).promise).getPage(1)
+  const annotations = (await page.getAnnotations()) as { subtype: string; url?: string }[]
+  return annotations.filter((annotation) => annotation.subtype === 'Link').map((annotation) => annotation.url)
 }
 
 describe('exported PDF', () => {
@@ -95,6 +103,60 @@ describe('exported PDF', () => {
         { type: 'tags', label: 'Languages', items: [{ text: 'TypeScript' }, { text: 'JavaScript' }, { text: 'CSS' }, { text: 'HTML' }] },
         { type: 'tags', label: 'Tools', items: [{ text: 'React' }, { text: 'Vite' }, { text: 'Node.js' }, { text: 'Playwright' }] },
       ])
+    },
+  )
+
+  it.each(['professional', 'elegant'] as const)(
+    'makes web addresses and emails clickable without changing the text (%s)',
+    async (template) => {
+      const resume = sampleResume({ template })
+      resume.sections = [
+        createSection('Summary', [createTextBlock('Portfolio at https://giuliarossi.dev/work. Node.js and ASP.NET stay text.')]),
+        createSection('Projects', [
+          createEntry({ title: 'resumy.app', subtitle: 'Side project' }, ['Cut bundle size by 38% (see github.com/acme/checkout).']),
+          createListBlock(['Questions? Write to hello@example.com']),
+        ]),
+      ]
+
+      expect(await renderLinks(resume)).toEqual([
+        'mailto:giulia.rossi@example.com',
+        'tel:+393331234567',
+        'https://linkedin.com/in/giuliarossi',
+        'https://github.com/giuliarossi',
+        'https://giuliarossi.dev/work',
+        // pdf.js reads a bare host back with a trailing slash.
+        'https://resumy.app/',
+        'https://github.com/acme/checkout',
+        'mailto:hello@example.com',
+      ])
+      const text = (await renderAndRead(resume)).map((line) => line.text).join('\n')
+      expect(text).toContain('Portfolio at https://giuliarossi.dev/work. Node.js and ASP.NET stay text.')
+      expect(text).toContain('Cut bundle size by 38% (see github.com/acme/checkout).')
+      expect(text).toContain('Questions? Write to hello@example.com')
+    },
+  )
+
+  it.each(['professional', 'classic', 'elegant'] as const)(
+    'wraps a long contact line between contacts, without hyphens (%s)',
+    async (template) => {
+      const resume = sampleResume({ template })
+      resume.basics.email = 'giulia.rossi.portfolio@example.com'
+      resume.basics.links = [
+        createItem('linkedin.com/in/giuliarossi-frontend'),
+        createItem('github.com/giuliarossi'),
+        createItem('giuliarossi.dev'),
+      ]
+      const lines = (await renderAndRead(resume)).map((line) => line.text)
+      const contactLines = lines.slice(lines.indexOf('Senior Frontend Engineer') + 1, lines.indexOf('Summary'))
+
+      expect(contactLines.length).toBeGreaterThan(1)
+      expect(contactLines.join(' ')).not.toContain('-  ')
+      for (const line of contactLines) {
+        // The separator ends a line, never starts one, and no hyphen is added after it.
+        expect(line).not.toMatch(/^·|·\s*-$/)
+      }
+      expect(contactLines.join(' ')).toMatch(/linkedin\.com\/in\/giuliarossi-frontend\s+·\s+github\.com\/giuliarossi/)
+      expect(await renderLinks(resume)).toContain('https://giuliarossi.dev/')
     },
   )
 
