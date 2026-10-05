@@ -46,6 +46,68 @@ interface Run {
   page: number
 }
 
+/** A filled shape or small image on the page, in the same coordinates as fragments (top of the box in `y`). */
+export interface Shape {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+/** A bullet is a dot or square between these sizes, in font sizes of its text. */
+const BULLET_SIZE = { min: 0.15, max: 0.7 }
+/** Widest gap between a bullet and its text, in font sizes. */
+const BULLET_GAP = 2.5
+
+/**
+ * Bullets drawn as shapes (web pages printed to PDF, some Word files) carry
+ * no text. A small dot or square just before the first text of a line
+ * becomes a "•" fragment, so the line reads as a bullet like any other.
+ * Several dots on one line are icons or rating dots, not bullets.
+ */
+export function addShapeBullets(fragments: readonly TextFragment[], shapes: readonly Shape[]): TextFragment[] {
+  const visible = fragments.filter((fragment) => fragment.text.trim())
+  const sameLine = (a: TextFragment, b: TextFragment) =>
+    Math.abs(a.y - b.y) <= Math.max(a.fontSize, b.fontSize) * BASELINE_TOLERANCE
+
+  // Each dot, with the text right after it.
+  const dots: { shape: Shape; text: TextFragment }[] = []
+  for (const shape of shapes) {
+    const centerY = shape.y + shape.height / 2
+    const right = shape.x + shape.width
+    let text: TextFragment | null = null
+    for (const fragment of visible) {
+      const size = fragment.fontSize
+      const isDot =
+        Math.min(shape.width, shape.height) >= size * BULLET_SIZE.min &&
+        Math.max(shape.width, shape.height) <= size * BULLET_SIZE.max &&
+        Math.max(shape.width, shape.height) <= Math.min(shape.width, shape.height) * 2
+      // Bullets sit between the baseline and the top of lowercase letters.
+      const onLine = centerY <= fragment.y + size * 0.1 && centerY >= fragment.y - size * 0.8
+      const gap = fragment.x - right
+      if (isDot && onLine && gap >= -0.5 && gap <= size * BULLET_GAP && (!text || gap < text.x - right)) text = fragment
+    }
+    if (text) dots.push({ shape, text })
+  }
+
+  const bullets = new Map<TextFragment, Shape>()
+  for (const { shape, text } of dots) {
+    const alone = dots.filter((dot) => sameLine(dot.text, text)).length === 1
+    // Text just before the dot means it sits inside a line rather than starting it.
+    const startsLine = !visible.some(
+      (fragment) => sameLine(fragment, text) && fragment.x < shape.x && fragment.x > shape.x - text.fontSize * 3,
+    )
+    if (alone && startsLine) bullets.set(text, shape)
+  }
+
+  return fragments.flatMap((fragment) => {
+    const shape = bullets.get(fragment)
+    if (!shape) return [fragment]
+    const bullet: TextFragment = { ...fragment, text: '•', x: shape.x, width: shape.width, bold: false, endsLine: false }
+    return [bullet, fragment]
+  })
+}
+
 /**
  * Groups fragments into lines, keeping the content-stream order, which is
  * the reading order for virtually every resume generator. A new line starts

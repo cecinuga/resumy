@@ -16,6 +16,7 @@ import {
   hasDate,
   isBullet,
   isLocation,
+  isPlaceName,
   isUpperCase,
   SINGLE_DATE,
   stripBullet,
@@ -194,9 +195,15 @@ function parseHeader(lines: readonly TextLine[]): Header {
       const role = separator ? first.slice(separator.index + separator[0].length) : ''
       tokens.splice(0, tokens.length, ...(role ? [role] : []), ...others)
     }
+    // Among contact details, a bare city name is the location: "jane@doe.com · Rome".
+    const isContactLine = tokens.some(isContactToken)
     for (const token of tokens) {
       const leftover = takeContact(token, basics)
       if (!leftover) continue
+      if (isContactLine && !basics.location && isPlaceName(leftover)) {
+        basics.location = leftover
+        continue
+      }
       const nearName = nameIndex === -1 ? index <= 1 : index <= nameIndex + 2
       if (!basics.headline && nearName && wordCount(leftover) <= 12 && !/[.!?]$/.test(leftover)) {
         basics.headline = leftover
@@ -231,6 +238,10 @@ function contactTokens(line: TextLine): string[] {
     .flatMap((segment) => segment.split(/\s+[|•·⋅∙◦▪♦]\s+|\s*[|]\s*|\s{2,}/))
     .map((token) => token.replace(/[\uE000-\uF8FF]/g, '').trim())
     .filter(Boolean)
+}
+
+function isContactToken(token: string): boolean {
+  return CONTACT_LABEL.test(token) || EMAIL.test(token) || findPhone(token) !== null || (token.match(URL_PATTERN)?.length ?? 0) > 0
 }
 
 /** Moves any contact detail found in the token into `basics`; returns what is left. */
@@ -515,26 +526,27 @@ function splitHeaderParts(text: string): string[] {
 }
 
 function addHeaderLine(entry: EntryBlock, line: TextLine): void {
-  const parts: string[] = []
-  for (const segment of line.segments) {
+  /** `placeSlot`: right-aligned, or next to the dates, where layouts put the place. */
+  const parts: { text: string; placeSlot: boolean }[] = []
+  line.segments.forEach((segment, segmentIndex) => {
     let text = segment
     const range = entry.date ? null : findDateRange(text)
     if (range) {
       entry.date = range
       text = removeFragment(text, range)
     }
-    parts.push(...splitHeaderParts(text))
-  }
+    for (const part of splitHeaderParts(text)) parts.push({ text: part, placeSlot: segmentIndex > 0 || range !== null })
+  })
 
   const rest: string[] = []
-  parts.forEach((part, index) => {
+  parts.forEach(({ text: part, placeSlot }, index) => {
     if (!entry.date && SINGLE_DATE.test(part)) {
       entry.date = part
       return
     }
     // A place is never the first thing on a title line ("Acme, Milan" is a company).
     const canBePlace = index > 0 || Boolean(entry.title && entry.subtitle)
-    if (!entry.location && canBePlace && isLocation(part)) {
+    if (!entry.location && canBePlace && (placeSlot ? isPlaceName(part) : isLocation(part))) {
       entry.location = part
       return
     }

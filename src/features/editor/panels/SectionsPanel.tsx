@@ -1,35 +1,31 @@
-import {
-  closestCenter,
-  DndContext,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  type Modifier,
-} from '@dnd-kit/core'
-import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { closestCenter, DndContext, type DragEndEvent, type Modifier } from '@dnd-kit/core'
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Eye, EyeOff, GripVertical, Plus, Trash2 } from 'lucide-react'
+import { memo } from 'react'
 import { Button } from '../../../components/Button/Button'
 import { useToast } from '../../../components/Toast/toast'
 import { createSectionFromPreset } from '../../resume/model/factories'
 import { SECTION_PRESETS } from '../../resume/model/sectionPresets'
 import type { Section } from '../../resume/model/types'
-import { useResume, useResumeActions } from '../../resume/state/context'
+import { useResumeActions } from '../../resume/state/context'
 import { fieldIds, focusField } from '../sheet/focus'
+import { useDragSensors, useStableIds } from '../sheet/sortable'
 import styles from './Panels.module.css'
 
 const restrictToVerticalAxis: Modifier = ({ transform }) => ({ ...transform, x: 0 })
+const MODIFIERS = [restrictToVerticalAxis]
+
+interface SectionsPanelProps {
+  sections: readonly Section[]
+  onSectionAdded?: () => void
+}
 
 /** Order, show, hide, remove and add sections. */
-export function SectionsPanel({ onSectionAdded }: { onSectionAdded?: () => void }) {
-  const { sections } = useResume()
+export const SectionsPanel = memo(function SectionsPanel({ sections, onSectionAdded }: SectionsPanelProps) {
   const { dispatch } = useResumeActions()
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  )
+  const sensors = useDragSensors()
+  const sectionIds = useStableIds(sections)
 
   const onDragEnd = ({ active, over }: DragEndEvent) => {
     if (!over || active.id === over.id) return
@@ -49,8 +45,8 @@ export function SectionsPanel({ onSectionAdded }: { onSectionAdded?: () => void 
       <div className={styles.fieldset}>
         <h3 className={styles.legend}>Order and visibility</h3>
         <p className={styles.hint}>Drag to reorder. Hidden sections stay saved but are left out of the PDF.</p>
-        <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToVerticalAxis]} onDragEnd={onDragEnd}>
-          <SortableContext items={sections.map((section) => section.id)} strategy={verticalListSortingStrategy}>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={MODIFIERS} onDragEnd={onDragEnd}>
+          <SortableContext items={sectionIds} strategy={verticalListSortingStrategy}>
             <ul className={styles.sectionList}>
               {sections.map((section, index) => (
                 <SectionRow key={section.id} section={section} index={index} />
@@ -72,9 +68,10 @@ export function SectionsPanel({ onSectionAdded }: { onSectionAdded?: () => void 
       </div>
     </div>
   )
-}
+})
 
-function SectionRow({ section, index }: { section: Section; index: number }) {
+/** One row; only the section that changed re-renders. */
+const SectionRow = memo(function SectionRow({ section, index }: { section: Section; index: number }) {
   const { dispatch } = useResumeActions()
   const toast = useToast()
   const title = section.title.trim() || 'Untitled section'
@@ -128,4 +125,4 @@ function SectionRow({ section, index }: { section: Section; index: number }) {
       </Button>
     </li>
   )
-}
+})

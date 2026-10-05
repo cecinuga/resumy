@@ -20,7 +20,7 @@ beforeAll(async () => {
 
 async function renderAndRead(resume: Resume) {
   const buffer = await renderToBuffer(<ResumeDocument resume={resume} />)
-  return extractTextLines(pdfjs.getDocument, new Uint8Array(buffer))
+  return extractTextLines(pdfjs, new Uint8Array(buffer))
 }
 
 /** The addresses the links on the first page open, in reading order. */

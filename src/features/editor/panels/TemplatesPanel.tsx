@@ -1,11 +1,12 @@
-import type { CSSProperties } from 'react'
+import { memo, type CSSProperties } from 'react'
 import { RESUME_INK } from '../../resume/design/palette'
 import { TEMPLATES, type TemplateSpec } from '../../resume/design/templates'
-import { useResume, useResumeActions } from '../../resume/state/context'
+import type { TemplateId } from '../../resume/model/types'
+import { useResumeActions } from '../../resume/state/context'
 import styles from './Panels.module.css'
 
-export function TemplatesPanel() {
-  const { design } = useResume()
+/** Takes only the current template, so typing on the sheet doesn't re-render it. */
+export const TemplatesPanel = memo(function TemplatesPanel({ current }: { current: TemplateId }) {
   const { dispatch } = useResumeActions()
 
   return (
@@ -22,7 +23,7 @@ export function TemplatesPanel() {
                 type="radio"
                 name="template"
                 value={template.id}
-                checked={design.template === template.id}
+                checked={current === template.id}
                 onChange={() => dispatch({ type: 'design/template', template: template.id })}
               />
               <TemplateThumbnail template={template} />
@@ -34,7 +35,7 @@ export function TemplatesPanel() {
       </fieldset>
     </div>
   )
-}
+})
 
 /** A miniature page sketching the template's layout. */
 function TemplateThumbnail({ template }: { template: TemplateSpec }) {

@@ -1,4 +1,4 @@
-import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist'
+import { getDocument, GlobalWorkerOptions, OPS } from 'pdfjs-dist'
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import { extractTextLines } from './pdfExtract'
 import type { TextLine } from './textLines'
@@ -7,5 +7,5 @@ import type { TextLine } from './textLines'
 GlobalWorkerOptions.workerSrc = workerUrl
 
 export function readPdfLines(data: Uint8Array): Promise<TextLine[]> {
-  return extractTextLines(getDocument, data)
+  return extractTextLines({ getDocument, OPS }, data)
 }

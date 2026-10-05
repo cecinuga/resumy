@@ -1,13 +1,15 @@
-import { useSyncExternalStore } from 'react'
+import { useCallback, useMemo, useSyncExternalStore } from 'react'
 
 export function useMediaQuery(query: string): boolean {
-  return useSyncExternalStore(
-    (onChange) => {
-      const list = window.matchMedia(query)
+  // One list per query, and a stable subscription: otherwise every render
+  // would create a new list and subscribe to it again.
+  const list = useMemo(() => window.matchMedia(query), [query])
+  const subscribe = useCallback(
+    (onChange: () => void) => {
       list.addEventListener('change', onChange)
       return () => list.removeEventListener('change', onChange)
     },
-    () => window.matchMedia(query).matches,
-    () => false,
+    [list],
   )
+  return useSyncExternalStore(subscribe, () => list.matches, () => false)
 }

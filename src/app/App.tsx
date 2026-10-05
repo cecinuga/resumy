@@ -15,6 +15,9 @@ import { useServiceWorker } from './serviceWorker'
 // The editor (and its drag-and-drop engine) loads only when it is needed.
 const EditorPage = lazy(() => import('../features/editor/EditorPage'))
 
+// A constant element keeps the (memoized) header from re-rendering with every keystroke.
+const DOWNLOAD_BUTTON = <DownloadButton />
+
 const PAGE_TITLES: Record<Route, string> = {
   home: 'Resumy · Free, private resume builder',
   editor: 'Editor · Resumy',
@@ -58,7 +61,7 @@ function Shell() {
       <a className={styles.skipLink} href="#main">
         Skip to content
       </a>
-      <Header primaryAction={page === 'editor' ? <DownloadButton /> : undefined} />
+      <Header primaryAction={page === 'editor' ? DOWNLOAD_BUTTON : undefined} />
       <main id="main" ref={mainRef} tabIndex={-1} className={styles.main}>
         {page === 'editor' ? (
           <Suspense fallback={<p className={styles.loading}>Opening the editor…</p>}>

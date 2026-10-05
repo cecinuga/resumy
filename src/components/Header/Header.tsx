@@ -1,5 +1,5 @@
 import { MonitorDown, Moon, Sprout, Sun } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { memo, type ReactNode } from 'react'
 import { useInstallApp } from '../../app/install'
 import { useTheme } from '../../app/theme'
 import { AppLink } from '../AppLink/AppLink'
@@ -14,7 +14,7 @@ interface HeaderProps {
   primaryAction?: ReactNode
 }
 
-export function Header({ primaryAction }: HeaderProps) {
+export const Header = memo(function Header({ primaryAction }: HeaderProps) {
   const { theme, toggleTheme } = useTheme()
   const nextTheme = theme === 'dark' ? 'light' : 'dark'
   const installApp = useInstallApp()
@@ -53,4 +53,4 @@ export function Header({ primaryAction }: HeaderProps) {
       </div>
     </header>
   )
-}
+})

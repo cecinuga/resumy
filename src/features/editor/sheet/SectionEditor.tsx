@@ -9,7 +9,7 @@ import type { Block, BlockType, Section } from '../../resume/model/types'
 import { useResumeActions } from '../../resume/state/context'
 import { BlockEditor } from './BlockEditors'
 import { DragHandle } from './dnd'
-import { useDropZone, useSortableNode } from './sortable'
+import { useDropZone, useSortableNode, useStableIds } from './sortable'
 import { EditableText } from './EditableText'
 import { fieldIds, focusField } from './focus'
 import { BLOCK_TYPE_LABELS, describeBlock } from './labels'
@@ -49,6 +49,7 @@ export const SectionEditor = memo(function SectionEditor({ section, index, dates
   const toast = useToast()
   const title = section.title.trim() || 'Untitled section'
   const zone = useDropZone('block', section.id, `section “${title}”`)
+  const blockIds = useStableIds(section.blocks)
   const mainType: BlockType = section.blocks[0]?.type ?? 'entry'
 
   const addBlock = (type: BlockType) => {
@@ -109,7 +110,7 @@ export const SectionEditor = memo(function SectionEditor({ section, index, dates
         </div>
       </div>
       <div {...zone} className={styles.dropZone}>
-        <SortableContext items={section.blocks.map((block) => block.id)} strategy={verticalListSortingStrategy}>
+        <SortableContext items={blockIds} strategy={verticalListSortingStrategy}>
           {section.blocks.map((block, index) => (
             <SortableBlock key={block.id} block={block} index={index} sectionId={section.id} datesRight={datesRight} />
           ))}

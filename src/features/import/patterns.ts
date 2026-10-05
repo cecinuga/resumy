@@ -88,6 +88,20 @@ export function isLocation(text: string): boolean {
   return (CITY_REGION.test(value) || CITY_PROVINCE.test(value)) && !ROLE_WORDS.test(value)
 }
 
+const PLACE_NAME = new RegExp(`^${PLACE}$`, 'u')
+const EMPLOYMENT_TYPE =
+  /\b(?:full[- ]?time|part[- ]?time|freelance|contract|contractor|internship|temporary|permanent|stage|tirocinio|tempo (?:pieno|parziale|determinato|indeterminato))\b/i
+
+/**
+ * A place, also when it is a bare city name ("Milan", "New York"). On its own
+ * a capitalized word could be anything, so this is only for the spots where
+ * layouts put places: next to dates, right-aligned, or among contact details.
+ */
+export function isPlaceName(text: string): boolean {
+  const value = text.trim()
+  return isLocation(value) || (PLACE_NAME.test(value) && !ROLE_WORDS.test(value) && !EMPLOYMENT_TYPE.test(value))
+}
+
 export function isUpperCase(text: string): boolean {
   const letters = text.replace(/[^\p{L}]/gu, '')
   return letters.length >= 2 && letters === letters.toUpperCase() && letters !== letters.toLowerCase()

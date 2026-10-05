@@ -1,19 +1,19 @@
 import { CircleAlert } from 'lucide-react'
-import type { CSSProperties } from 'react'
+import { memo, type CSSProperties } from 'react'
 import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl'
 import { AA_TEXT, hexContrast } from '../../../lib/contrast'
 import { fontStack, RESUME_FONTS } from '../../resume/design/fonts'
 import { ACCENT_PRESETS, RESUME_INK } from '../../resume/design/palette'
 import { PAPER_SIZES, TEXT_SIZES } from '../../resume/design/paper'
 import type { Design, PaperSize, TextSize } from '../../resume/model/types'
-import { useResume, useResumeActions } from '../../resume/state/context'
+import { useResumeActions } from '../../resume/state/context'
 import styles from './Panels.module.css'
 
 const TEXT_SIZE_OPTIONS = (Object.keys(TEXT_SIZES) as TextSize[]).map((value) => ({ value, label: TEXT_SIZES[value].label }))
 const PAPER_OPTIONS = (Object.keys(PAPER_SIZES) as PaperSize[]).map((value) => ({ value, label: PAPER_SIZES[value].label }))
 
-export function StylePanel() {
-  const { design } = useResume()
+/** Takes only the design, so typing on the sheet doesn't re-render it. */
+export const StylePanel = memo(function StylePanel({ design }: { design: Design }) {
   const { dispatch } = useResumeActions()
   const set = (patch: Partial<Design>) => dispatch({ type: 'design/set', patch })
   const isPreset = ACCENT_PRESETS.some((preset) => preset.value.toLowerCase() === design.accent.toLowerCase())
@@ -83,4 +83,4 @@ export function StylePanel() {
       <SegmentedControl legend="Paper" value={design.paper} options={PAPER_OPTIONS} onChange={(paper) => set({ paper })} />
     </div>
   )
-}
+})

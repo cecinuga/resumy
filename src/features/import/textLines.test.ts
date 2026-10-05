@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { groupIntoLines, removePageFurniture, type TextFragment, type TextLine } from './textLines'
+import { addShapeBullets, groupIntoLines, removePageFurniture, type Shape, type TextFragment, type TextLine } from './textLines'
 
 const fragment = (text: string, x: number, y: number, extra: Partial<TextFragment> = {}): TextFragment => ({
   text,
@@ -45,6 +45,28 @@ describe('groupIntoLines', () => {
       1,
     )
     expect(line).toMatchObject({ fontSize: 10, bold: false })
+  })
+})
+
+describe('addShapeBullets', () => {
+  // A 3pt dot, as Chrome draws a list bullet, 8pt before 10pt text with its baseline at `y`.
+  const dot = (y: number, x = 60): Shape => ({ x, y: y - 4.5, width: 3, height: 3 })
+  const texts = (fragments: TextFragment[]) => groupIntoLines(fragments, 1).map((line) => line.text)
+
+  it('turns a dot before the start of a line into a bullet', () => {
+    const fragments = [fragment('WebAgency', 57, 100, { endsLine: true }), fragment('Built a design system', 71, 114)]
+    expect(texts(addShapeBullets(fragments, [dot(114)]))).toEqual(['WebAgency', '• Built a design system'])
+  })
+
+  it('leaves the line alone when its dots are icons or ratings', () => {
+    const fragments = [fragment('jane@doe.com', 71, 100), fragment('555 0100', 171, 100)]
+    expect(texts(addShapeBullets(fragments, [dot(100), dot(100, 160)]))).toEqual(['jane@doe.com 555 0100'])
+  })
+
+  it('ignores dots inside a line and shapes too big for a bullet', () => {
+    const fragments = [fragment('Go', 50, 100), fragment('expert', 71, 100, { endsLine: true }), fragment('Intro', 71, 120)]
+    const shapes = [dot(100), { x: 55, y: 110, width: 12, height: 12 }]
+    expect(texts(addShapeBullets(fragments, shapes))).toEqual(['Go expert', 'Intro'])
   })
 })
 

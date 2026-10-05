@@ -1,5 +1,5 @@
 import { Check, CircleAlert, Eye, LayoutTemplate, ListOrdered, Palette, PenLine, Redo2, RotateCcw, Undo2, type LucideIcon } from 'lucide-react'
-import { useEffect, useId, useState, type CSSProperties } from 'react'
+import { useCallback, useEffect, useId, useState, type CSSProperties } from 'react'
 import { navigate } from '../../app/router'
 import { Button } from '../../components/Button/Button'
 import { Dialog } from '../../components/Dialog/Dialog'
@@ -37,15 +37,20 @@ export default function EditorPage() {
   const [confirmingReset, setConfirmingReset] = useState(false)
   const panelId = useId()
   useUndoShortcuts(undo, redo)
+  // On narrow screens the drawer closes so the new section is in view.
+  const onSectionAdded = useCallback(() => {
+    if (!isWide) setPanel(null)
+  }, [isWide])
 
+  // Each panel gets only what it shows, so typing on the sheet doesn't re-render it.
   const activePanel = PANELS.find(({ id }) => id === panel)
   const panelContent =
     panel === 'templates' ? (
-      <TemplatesPanel />
+      <TemplatesPanel current={resume.design.template} />
     ) : panel === 'style' ? (
-      <StylePanel />
+      <StylePanel design={resume.design} />
     ) : panel === 'sections' ? (
-      <SectionsPanel onSectionAdded={() => !isWide && setPanel(null)} />
+      <SectionsPanel sections={resume.sections} onSectionAdded={onSectionAdded} />
     ) : null
 
   return (

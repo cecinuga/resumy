@@ -183,6 +183,46 @@ describe('parseResume: other layouts', () => {
     expect(resume.sections[0]?.blocks[0]).toMatchObject({ type: 'entry', title: 'Analyst', date: '2019 – 2021' })
   })
 
+  it('takes a bare city among the contact details as the location', () => {
+    const resume = parseResume(
+      lines(
+        ['Laura Verdi', { size: 22, bold: true }],
+        ['Frontend Developer', { size: 12 }],
+        'laura.verdi@example.com · +39 333 765 4321 · Roma',
+        heading('ESPERIENZA'),
+        ['Frontend Developer', { bold: true, aside: 'Gen 2021 – Oggi' }],
+        'WebAgency',
+        '• Sviluppato un design system condiviso da 4 team',
+      ),
+    )
+    expect(resume.basics).toMatchObject({ headline: 'Frontend Developer', location: 'Roma' })
+    expect(entries(resume, 'Esperienza')).toMatchObject([
+      { title: 'Frontend Developer', subtitle: 'WebAgency', items: [{ text: 'Sviluppato un design system condiviso da 4 team' }] },
+    ])
+  })
+
+  it('reads a bare city where layouts put the place: right-aligned, or after the dates', () => {
+    const resume = parseResume(
+      lines(
+        ['Giulia Rossi', { size: 22, bold: true }],
+        heading('EXPERIENCE'),
+        ['Senior Engineer', { bold: true, aside: 'Mar 2021 – Present' }],
+        ['Acme S.p.A.', { aside: 'Milan' }],
+        '• Led the move to TypeScript.',
+        ['Engineer', { bold: true }],
+        'ShopFast',
+        'Jan 2017 – Feb 2021 · Turin',
+        ['Designer', { bold: true }],
+        ['Initech', { aside: 'Full-time' }],
+      ),
+    )
+    expect(entries(resume, 'Experience')).toMatchObject([
+      { title: 'Senior Engineer', subtitle: 'Acme S.p.A.', date: 'Mar 2021 – Present', location: 'Milan' },
+      { title: 'Engineer', subtitle: 'ShopFast', date: 'Jan 2017 – Feb 2021', location: 'Turin' },
+      { title: 'Designer', subtitle: 'Initech, Full-time', location: '' },
+    ])
+  })
+
   it('makes plain bullets with no job around them a list', () => {
     const resume = parseResume(lines(['Sam Roe', { size: 18 }], heading('CERTIFICATIONS'), '• AWS Developer', '• CKA'))
     expect(resume.sections[0]?.blocks).toMatchObject([{ type: 'list', items: [{ text: 'AWS Developer' }, { text: 'CKA' }] }])

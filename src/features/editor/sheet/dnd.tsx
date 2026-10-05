@@ -2,25 +2,20 @@ import {
   closestCenter,
   DndContext,
   DragOverlay,
-  KeyboardSensor,
-  PointerSensor,
   pointerWithin,
-  useSensor,
-  useSensors,
   type Announcements,
   type CollisionDetection,
   type DragEndEvent,
   type DragOverEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
-import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
-import { GripVertical } from 'lucide-react'
 import { forwardRef, useState, type ButtonHTMLAttributes, type ReactNode } from 'react'
 import { hasItems, type Id, type Resume } from '../../resume/model/types'
 import { useResumeActions } from '../../resume/state/context'
 import { findBlock, findItem, moveBlock, moveItem } from '../../resume/state/operations'
+import { GripVertical } from './icons'
 import styles from './Sheet.module.css'
-import type { DragData, DragLevel } from './sortable'
+import { useDragSensors, type DragData, type DragLevel } from './sortable'
 
 interface Position {
   containerId: Id
@@ -73,6 +68,8 @@ const announcements: Announcements = {
   onDragCancel: ({ active }) => `Moving ${label(active)} was cancelled.`,
 }
 
+const ACCESSIBILITY = { announcements }
+
 interface SheetDndProps {
   resume: Resume
   /** Renders the sheet; while dragging it receives the live preview. */
@@ -83,10 +80,7 @@ export function SheetDnd({ resume, children }: SheetDndProps) {
   const { dispatch } = useResumeActions()
   const [preview, setPreview] = useState<Resume | null>(null)
   const [active, setActive] = useState<{ id: Id; data: DragData } | null>(null)
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  )
+  const sensors = useDragSensors()
 
   const reset = () => {
     setPreview(null)
@@ -152,7 +146,7 @@ export function SheetDnd({ resume, children }: SheetDndProps) {
       onDragOver={onDragOver}
       onDragEnd={onDragEnd}
       onDragCancel={reset}
-      accessibility={{ announcements }}
+      accessibility={ACCESSIBILITY}
     >
       {children(preview ?? resume)}
       <DragOverlay dropAnimation={null}>

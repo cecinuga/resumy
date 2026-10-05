@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import styles from './Footer.module.css'
 
 const AUTHOR_LINKS = [
@@ -6,7 +7,7 @@ const AUTHOR_LINKS = [
   { label: 'Blog', href: 'https://cecinuga.dev' },
 ] as const
 
-export function Footer() {
+export const Footer = memo(function Footer() {
   return (
     <footer className={styles.footer}>
       <div className={styles.inner}>
@@ -25,4 +26,4 @@ export function Footer() {
       </div>
     </footer>
   )
-}
+})
