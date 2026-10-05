@@ -1,11 +1,12 @@
 import { rectSortingStrategy, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Plus, X } from 'lucide-react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Button } from '../../../components/Button/Button'
 import { splitList } from '../../../lib/text'
 import { createItem } from '../../resume/model/factories'
 import type { Block, BlockTextField, EntryBlock, ListBlock, TagsBlock, TextItem } from '../../resume/model/types'
 import { useResumeActions } from '../../resume/state/context'
+import { useBackspace } from './backspace'
 import { DragHandle } from './dnd'
 import { useDropZone, useSortableNode } from './sortable'
 import { EditableText } from './EditableText'
@@ -187,7 +188,14 @@ function TagsEditor({ block }: { block: TagsBlock }) {
   const set = useBlockField(block.id)
   const zone = useDropZone('tag', block.id, block.label || 'this group')
   const [draft, setDraft] = useState('')
+  const input = useRef<HTMLInputElement>(null)
   const inputId = fieldIds.tagInput(block.id)
+  const lastItem = block.items.at(-1)
+  useBackspace(input, {
+    isEmpty: () => !input.current?.value,
+    // Back to the last item, like an empty field moves to the previous one.
+    onLeave: lastItem && (() => focusField(fieldIds.item(lastItem.id))),
+  })
 
   const commit = (text: string) => {
     let previous = block.items.at(-1)?.id
@@ -221,6 +229,7 @@ function TagsEditor({ block }: { block: TagsBlock }) {
           ))}
         </SortableContext>
         <input
+          ref={input}
           className={styles.tagInput}
           value={draft}
           placeholder="Add item"
@@ -237,8 +246,6 @@ function TagsEditor({ block }: { block: TagsBlock }) {
             if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
               event.preventDefault()
               commit(draft)
-            } else if (event.key === 'Backspace' && !draft && block.items.length) {
-              focusField(fieldIds.item(block.items.at(-1)!.id))
             }
           }}
           onBlur={() => draft.trim() && commit(draft)}

@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, type ClipboardEvent, type KeyboardEvent, type RefObject } from 'react'
+import { useBackspace } from './backspace'
 import { focusAdjacentField } from './focus'
 import styles from './Sheet.module.css'
 
@@ -18,7 +19,7 @@ interface EditableTextProps {
   multiline?: boolean
   /** Enter in a single-line field; by default focus moves to the next field. */
   onEnter?: () => void
-  /** Backspace in an empty field, e.g. to delete a bullet. */
+  /** Backspace in an empty field, e.g. to delete a bullet (see backspace.ts). */
   onDeleteEmpty?: () => void
   /** Pasting several lines: the first goes here, the rest is handed over. */
   onPasteLines?: (lines: string[]) => void
@@ -76,6 +77,11 @@ export function EditableText({
   /** The last value this field reported (null before the first render). */
   const emitted = useRef<string | null>(null)
 
+  useBackspace(ref, {
+    isEmpty: () => !ref.current || !readText(ref.current, multiline),
+    onLeave: onDeleteEmpty,
+  })
+
   // Writes the text on mount and when the value changes from elsewhere.
   useLayoutEffect(() => {
     const element = ref.current
@@ -102,9 +108,6 @@ export function EditableText({
       event.preventDefault()
       if (onEnter) onEnter()
       else focusAdjacentField(element)
-    } else if (event.key === 'Backspace' && onDeleteEmpty && !readText(element, multiline)) {
-      event.preventDefault()
-      onDeleteEmpty()
     } else if ((event.metaKey || event.ctrlKey) && ['b', 'i', 'u'].includes(event.key.toLowerCase())) {
       // Resumes are plain text: no bold or italic from shortcuts.
       event.preventDefault()
