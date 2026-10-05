@@ -10,6 +10,7 @@ import { ResumeProvider } from '../features/resume/state/ResumeProvider'
 import { track } from '../lib/analytics'
 import styles from './App.module.css'
 import { navigate, pathFor, routeFromPath, useRoute, type Route } from './router'
+import { useServiceWorker } from './serviceWorker'
 
 // The editor (and its drag-and-drop engine) loads only when it is needed.
 const EditorPage = lazy(() => import('../features/editor/EditorPage'))
@@ -32,6 +33,7 @@ export function App() {
 }
 
 function Shell() {
+  useServiceWorker()
   const route = useRoute()
   const { resume } = useResumeState()
   const page: Route = route === 'editor' && resume ? 'editor' : 'home'

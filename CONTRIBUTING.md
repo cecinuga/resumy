@@ -36,7 +36,7 @@ npm run deploy
 
 ```
 src/
-├── app/            App shell, minimal History API router, theme
+├── app/            App shell, minimal History API router, theme, service worker, install
 ├── components/     Reusable UI: Button, Dialog, Drawer, Menu, Toast…
 ├── features/
 │   ├── home/       Start page: upload or start from scratch
@@ -51,6 +51,7 @@ src/
 - **One model, two renderers.** Templates are plain data (`features/resume/design/templates.ts`). The editable sheet and the PDF read the same resolved sizes and colors, so the preview matches the download.
 - **State** lives in a reducer with an undo history. New ids are created outside the reducer, which keeps it pure. Drag and drop previews moves locally and commits a single action on drop.
 - **Heavy code loads on demand:** pdf.js loads when you upload, react-pdf when you download, and the editor when you open it.
+- **Installable and offline.** `public/manifest.json` makes Resumy installable; its icons are drawn from `public/favicon.svg`. [vite-plugin-pwa](https://vite-pwa-org.netlify.app/) generates the service worker at build time (see `vite.config.ts`). It precaches the whole app, pdf.js, react-pdf and the Latin font files included, so uploads and downloads work offline. A new version waits until the person chooses to reload (`src/app/serviceWorker.ts`). The service worker only exists in production builds: try it with `npm run build && npm run preview`.
 - **Round-trip tests** render resumes in every template to PDF, then parse them back. This checks both the exported text and the importer.
 
 ## Design
@@ -59,4 +60,4 @@ The visual design system ("Herbarium": calm, organic, like a botanist's notebook
 
 ## Screenshots
 
-The images in `.github/screenshots/` show a fictional resume. Retake them whenever the interface changes noticeably, so the README stays truthful.
+The images in `.github/screenshots/` show a fictional resume. Retake them whenever the interface changes noticeably, so the README stays truthful. The install dialog shows smaller copies of them from `public/screenshots/`, so update those too.

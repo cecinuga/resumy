@@ -61,6 +61,12 @@ Resumy follows your device's light or dark setting, and you can switch it from t
   <img src=".github/screenshots/mobile.png" width="560" alt="Resumy on a phone: the start page, and the style panel in the editor">
 </p>
 
+## Install it, use it offline
+
+Resumy can live on your computer or phone like any other app, with its own icon and window. In Chrome or Edge, press the install button in the header or in the address bar. On an iPhone or iPad, tap **Share**, then **Add to Home Screen**.
+
+Once you've opened Resumy, it works without an internet connection too, uploading and downloading PDFs included. When there's a new version, Resumy lets you know and switches to it when you choose **Reload**.
+
 ## Tips for importing a resume
 
 - Resumy reads PDFs that contain real text, like the ones exported from Word, Google Docs or another resume builder. A scanned or photographed resume is just a picture, so there's nothing to read: start from scratch instead.

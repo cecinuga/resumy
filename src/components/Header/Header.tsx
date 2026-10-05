@@ -1,5 +1,6 @@
-import { Moon, Sprout, Sun } from 'lucide-react'
+import { MonitorDown, Moon, Sprout, Sun } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { useInstallApp } from '../../app/install'
 import { useTheme } from '../../app/theme'
 import { AppLink } from '../AppLink/AppLink'
 import { Button, LinkButton } from '../Button/Button'
@@ -16,6 +17,7 @@ interface HeaderProps {
 export function Header({ primaryAction }: HeaderProps) {
   const { theme, toggleTheme } = useTheme()
   const nextTheme = theme === 'dark' ? 'light' : 'dark'
+  const installApp = useInstallApp()
 
   return (
     <header className={styles.header}>
@@ -27,6 +29,11 @@ export function Header({ primaryAction }: HeaderProps) {
           <span className={styles.logoText}>Resumy</span>
         </AppLink>
         <div className={styles.actions}>
+          {installApp && (
+            <Button variant="quiet" iconOnly icon={MonitorDown} onClick={installApp}>
+              Install Resumy as an app
+            </Button>
+          )}
           <Button variant="quiet" iconOnly icon={theme === 'dark' ? Sun : Moon} onClick={toggleTheme}>
             {`Switch to ${nextTheme} theme`}
           </Button>
