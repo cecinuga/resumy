@@ -20,8 +20,6 @@ const FACES = [
 ] as const
 
 let registered = false
-/** The families registered below, whose loaded files can be released. */
-const families: string[] = []
 
 export function registerPdfFonts(resolve: FontFileResolver): void {
   if (registered) return
@@ -29,10 +27,8 @@ export function registerPdfFonts(resolve: FontFileResolver): void {
     const packageName = PACKAGES[font.id].name
     for (const subset of subsetsOf(font)) {
       // Registering only maps names to files; nothing is fetched until a document uses the family.
-      const family = subsetFamily(font, subset)
-      families.push(family)
       Font.register({
-        family,
+        family: subsetFamily(font, subset),
         fonts: FACES.map(({ weight, style }) => ({
           src: resolve(`${packageName}-${subset}-${weight}-${style}.woff`, packageName),
           fontWeight: weight,
@@ -44,20 +40,4 @@ export function registerPdfFonts(resolve: FontFileResolver): void {
   // Hyphenated words come out split in two when the PDF text is extracted.
   Font.registerHyphenationCallback((word) => [word])
   registered = true
-}
-
-/**
- * Lets go of the font files loaded for the last PDF. react-pdf keeps every
- * parsed font for good, megabytes that a resume builder only needs during a
- * download; the next PDF loads them again, from the browser cache. Font.reset()
- * can't be used: it keeps the finished load, so the fonts would never come back.
- */
-export function releasePdfFonts(): void {
-  const loaded = Font.getRegisteredFonts()
-  for (const family of families) {
-    for (const source of loaded[family]?.sources ?? []) {
-      source.data = null
-      source.loadResultPromise = null
-    }
-  }
 }

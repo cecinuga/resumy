@@ -38,7 +38,7 @@ Use the panels on the left to shape how your resume looks:
 
 ![The five templates: Professional, Classic, Modern, Compact and Elegant](.github/screenshots/templates.png)
 
-Switch to **Preview** at any time to read your resume without the editing controls.
+Switch to **Preview** at any time to see your resume page by page, exactly as the PDF will break it. The toolbar always tells you how many pages it fills.
 
 ### 4. Download your PDF
 
@@ -48,7 +48,7 @@ Press **Download PDF** in the top right corner. The file is named after you, rea
 
 - **Nothing is uploaded.** Your PDF is read, and your new one is created, inside your browser.
 - **Your work is saved as you type**, in this browser only. Come back later and pick up where you left off with **Continue editing**, or press **Start over** to clear it.
-- **Keep your PDF.** Clearing your browser data also deletes your draft. The PDF you download is your copy: upload it to Resumy again whenever you want to update it.
+- **Keep your PDF.** Clearing your browser data also deletes your draft. The PDF you download is your copy: upload it to Resumy again whenever you want to update it, and it comes back exactly as you left it, template and colors included. It holds only what it prints: hidden sections stay in your browser.
 - **Only counts, no cookies.** Resumy counts visits, new resumes, uploads and downloads to know whether it's useful, without storing cookies or any identifier on your device. It never sees what you write, and it doesn't count you at all if your browser asks sites not to track you.
 
 ## Light or dark, on any screen
@@ -71,7 +71,7 @@ Once you've opened Resumy, it works without an internet connection too, uploadin
 
 - Resumy reads PDFs that contain real text, like the ones exported from Word, Google Docs or another resume builder. A scanned or photographed resume is just a picture, so there's nothing to read: start from scratch instead.
 - Section headings are recognized in English, Italian, Spanish, French and German.
-- Resumes with two columns or unusual layouts may need some tidying after the import. Give everything a quick read before you download.
+- Resumes with two columns or unusual layouts may need some tidying after the import. Resumy marks the entries that look misread; give everything a quick read before you download.
 
 ## Feedback and contributing
 
