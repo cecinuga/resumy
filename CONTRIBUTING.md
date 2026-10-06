@@ -24,7 +24,7 @@ npm run dev
 
 The app is hosted on Firebase Hosting (project `resumy-4464b`, see `.firebaserc`). `firebase.json` sets up the single-page-app rewrite, long-lived caching for hashed assets and security headers, including a Content-Security-Policy that only allows the app itself plus Firebase Analytics.
 
-Usage counts (page views, new resumes, uploads and downloads) go to Firebase Analytics; resume content is never sent. Consent Mode keeps `analytics_storage` denied, so no cookies or identifiers are stored on the device (cookieless pings). Advertising features are off, and visitors who send Global Privacy Control or Do Not Track are not tracked. To enable it, copy `.env.example` to `.env.local` and fill in the web app config from the Firebase console (*Project settings → Your apps*). Analytics stays off while the API key, app ID or measurement ID are missing.
+Anonymous usage counts (page views, new resumes, uploads and downloads) go to Firebase Analytics; resume content is never sent. Advertising features are off, and visitors who send Global Privacy Control or Do Not Track are not tracked. To enable it, copy `.env.example` to `.env.local` and fill in the web app config from the Firebase console (*Project settings → Your apps*). Analytics stays off while the API key, app ID or measurement ID are missing.
 
 ```bash
 npm install -g firebase-tools
