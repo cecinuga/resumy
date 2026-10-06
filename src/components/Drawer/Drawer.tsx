@@ -10,15 +10,24 @@ interface DrawerProps {
   children: ReactNode
 }
 
-/** A bottom sheet for small screens, built on the native modal <dialog>. */
+/**
+ * A bottom sheet for small screens, built on the native modal <dialog>. It
+ * takes half the screen and leaves the page above it uncovered, so the
+ * effect of a choice made in it shows right away.
+ */
 export function Drawer({ open, onClose, title, children }: DrawerProps) {
   const ref = useRef<HTMLDialogElement>(null)
+  const bodyRef = useRef<HTMLDivElement>(null)
   const titleId = useId()
 
   useEffect(() => {
     const dialog = ref.current
     if (!dialog) return
-    if (open && !dialog.open) dialog.showModal()
+    if (open && !dialog.open) {
+      dialog.showModal()
+      // Always open at the top, whatever the focus or the last visit scrolled to.
+      if (bodyRef.current) bodyRef.current.scrollTop = 0
+    }
     if (!open && dialog.open) dialog.close()
   }, [open])
 
@@ -42,7 +51,9 @@ export function Drawer({ open, onClose, title, children }: DrawerProps) {
           Close
         </Button>
       </div>
-      <div className={styles.body}>{children}</div>
+      <div ref={bodyRef} className={styles.body}>
+        {children}
+      </div>
     </dialog>
   )
 }

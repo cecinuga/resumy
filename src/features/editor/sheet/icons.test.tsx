@@ -1,10 +1,9 @@
 import { render } from '@testing-library/react'
-import { GripVertical as LucideGrip, LucideProvider } from 'lucide-react'
-import type { ComponentType } from 'react'
+import { GripVertical as LucideGrip, LucideProvider, type LucideIcon } from 'lucide-react'
 import { describe, expect, it } from 'vitest'
 import { GripVertical } from './icons'
 
-const renderIcon = (Icon: ComponentType<{ 'aria-hidden'?: boolean }>) =>
+const renderIcon = (Icon: LucideIcon) =>
   render(
     <LucideProvider size={18} strokeWidth={1.5} absoluteStrokeWidth>
       <Icon aria-hidden />

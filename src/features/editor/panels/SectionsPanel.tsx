@@ -6,7 +6,8 @@ import { memo } from 'react'
 import { Button } from '../../../components/Button/Button'
 import { useToast } from '../../../components/Toast/toast'
 import { createSectionFromPreset } from '../../resume/model/factories'
-import { SECTION_PRESETS } from '../../resume/model/sectionPresets'
+import type { SectionPresetId } from '../../resume/model/sectionPresets'
+import { addableSections } from '../sectionChoices'
 import type { Section } from '../../resume/model/types'
 import { useResumeActions } from '../../resume/state/context'
 import { fieldIds, focusField } from '../sheet/focus'
@@ -33,7 +34,7 @@ export const SectionsPanel = memo(function SectionsPanel({ sections, onSectionAd
     if (toIndex !== -1) dispatch({ type: 'section/move', id: String(active.id), toIndex })
   }
 
-  const addSection = (presetId: (typeof SECTION_PRESETS)[number]['id']) => {
+  const addSection = (presetId: SectionPresetId) => {
     const section = createSectionFromPreset(presetId)
     dispatch({ type: 'section/add', section })
     onSectionAdded?.()
@@ -59,7 +60,7 @@ export const SectionsPanel = memo(function SectionsPanel({ sections, onSectionAd
       <div className={styles.fieldset}>
         <h3 className={styles.legend}>Add a section</h3>
         <div className={styles.presets}>
-          {SECTION_PRESETS.map((preset) => (
+          {addableSections(sections).map((preset) => (
             <Button key={preset.id} size="sm" variant="secondary" icon={Plus} onClick={() => addSection(preset.id)}>
               {preset.title}
             </Button>

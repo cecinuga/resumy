@@ -35,6 +35,12 @@ describe('paginate', () => {
     expect(breaks).toEqual([{ at: 430, field: 'f1', offset: 0 }])
   })
 
+  it('keeps a heading with the first entry of its section', () => {
+    // Room for the heading and 60px under it, but not for the 70px entry title block after it.
+    const breaks = paginate(stack([350, 'keep'], [20, 'heading'], [70, 'keep']), 450, 60)
+    expect(breaks).toEqual([{ at: 360, field: 'f1', offset: 0 }])
+  })
+
   it('counts every page of a long resume, carrying moved content along', () => {
     const units = stack(...Array.from({ length: 12 }, () => [90, 'keep'] as [number, BreakRule]))
     const breaks = paginate(units, 250, 60)

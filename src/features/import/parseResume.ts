@@ -35,8 +35,16 @@ import type { TextLine } from './textLines'
  * patterns. Anything it cannot place still ends up in the document, so
  * nothing the person wrote is lost.
  */
+/** Far longer than any line of a resume; a guard against crafted files that would slow the patterns down. */
+const MAX_LINE_LENGTH = 2000
+
+function capLength(line: TextLine): TextLine {
+  if (line.text.length <= MAX_LINE_LENGTH) return line
+  return { ...line, text: line.text.slice(0, MAX_LINE_LENGTH), segments: line.segments.map((segment) => segment.slice(0, MAX_LINE_LENGTH)) }
+}
+
 export function parseResume(input: readonly TextLine[], design: Design = createDefaultDesign()): Resume {
-  const lines = input.filter((line) => line.text.trim())
+  const lines = input.filter((line) => line.text.trim()).map(capLength)
   const layout = measureLayout(lines)
   const headings = findHeadings(lines, layout)
 

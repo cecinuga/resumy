@@ -1,7 +1,7 @@
 import { X } from 'lucide-react'
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { createId } from '../../lib/id'
-import { ToastContext, type ToastOptions } from './toast'
+import { ToastContext, ToastDismissContext, type ToastOptions } from './toast'
 import styles from './Toast.module.css'
 
 const TOAST_DURATION_MS = 6000
@@ -17,12 +17,21 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setToasts((current) => current.filter((toast) => toast.id !== id))
   }, [])
 
-  // Only the latest message matters; older ones are replaced.
-  const show = useCallback((toast: ToastOptions) => setToasts([{ ...toast, id: createId() }]), [])
+  // Only the latest message matters; older ones are replaced, except those
+  // that wait for an answer (such as a new version to reload into).
+  const show = useCallback(
+    (toast: ToastOptions) =>
+      setToasts((current) => [
+        ...current.filter((shown) => shown.persistent && shown.message !== toast.message),
+        { ...toast, id: createId() },
+      ]),
+    [],
+  )
+  const dismissAll = useCallback(() => setToasts((current) => current.filter((shown) => shown.persistent)), [])
 
   return (
     <ToastContext.Provider value={show}>
-      {children}
+      <ToastDismissContext.Provider value={dismissAll}>{children}</ToastDismissContext.Provider>
       <div className={styles.region} role="status" aria-live="polite">
         {toasts.map((toast) => (
           <ToastMessage key={toast.id} toast={toast} onDismiss={dismiss} />
@@ -38,10 +47,10 @@ function ToastMessage({ toast, onDismiss }: { toast: Toast; onDismiss: (id: stri
 
   // Stays while hovered or focused, so there is time to read it and act.
   useEffect(() => {
-    if (paused) return
+    if (paused || toast.persistent) return
     const timer = window.setTimeout(() => onDismiss(toast.id), TOAST_DURATION_MS)
     return () => window.clearTimeout(timer)
-  }, [paused, onDismiss, toast.id])
+  }, [paused, onDismiss, toast.id, toast.persistent])
 
   return (
     <div

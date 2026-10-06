@@ -1,13 +1,15 @@
 import type { Analytics } from 'firebase/analytics'
 
 /**
- * Anonymous usage counts (visits, new resumes, uploads, downloads) through
- * Firebase Analytics. Resume content is never sent. The SDK is loaded lazily
- * and only when it is configured, and visitors who send Global Privacy
- * Control or Do Not Track are not tracked at all.
+ * Usage counts (visits, new resumes, uploads, downloads) through Firebase
+ * Analytics, without cookies: analytics storage stays denied, so nothing is
+ * stored on the device and visits can't be linked to each other. Resume
+ * content is never sent. The SDK is loaded lazily and only when it is
+ * configured, and visitors who send Global Privacy Control or Do Not Track
+ * are not counted at all.
  */
 
-export type UploadOutcome = 'success' | 'not_pdf' | 'too_large' | 'no_text' | 'protected' | 'unreadable'
+export type UploadOutcome = 'success' | 'not_pdf' | 'too_large' | 'no_text' | 'protected' | 'unreadable' | 'reader_unavailable'
 
 export type AnalyticsEvent =
   | { name: 'page_view'; params: { page_title: string; page_path: string } }
@@ -42,12 +44,14 @@ function loadAnalytics(): Promise<Analytics | null> {
     if (!isConfigured() || visitorOptedOut()) return null
     const [{ initializeApp }, sdk] = await Promise.all([import('firebase/app'), import('firebase/analytics')])
     if (!(await sdk.isSupported())) return null
-    // No advertising features: only count usage.
+    // No advertising features and no cookies or other identifiers stored on
+    // the device: Consent Mode then sends cookieless pings, which need no
+    // consent banner.
     sdk.setConsent({
       ad_storage: 'denied',
       ad_user_data: 'denied',
       ad_personalization: 'denied',
-      analytics_storage: 'granted',
+      analytics_storage: 'denied',
     })
     return sdk.initializeAnalytics(initializeApp(firebaseConfig), {
       config: { send_page_view: false, allow_google_signals: false, allow_ad_personalization_signals: false },

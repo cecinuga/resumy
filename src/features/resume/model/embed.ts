@@ -1,6 +1,6 @@
 import { appendPrivateData, readPrivateData } from '../../../lib/pdfPrivateData'
 import { normalizeResume } from './normalize'
-import { printableResume } from './printable'
+import { printableResume, printedText } from './printable'
 import type { Resume } from './types'
 
 /**
@@ -20,21 +20,6 @@ interface Payload {
   /** Fingerprint of the printed text (see textFingerprint), to notice a PDF edited elsewhere. */
   text: string
   resume: Resume
-}
-
-/** Every piece of text the PDF prints, in any order. */
-function printedText({ basics, sections }: Resume): string {
-  const parts = [basics.name, basics.headline, basics.email, basics.phone, basics.location, ...basics.links.map((link) => link.text)]
-  for (const section of sections) {
-    parts.push(section.title)
-    for (const block of section.blocks) {
-      if (block.type === 'entry') parts.push(block.title, block.subtitle, block.date, block.location)
-      if (block.type === 'text') parts.push(block.text)
-      if (block.type === 'tags') parts.push(block.label)
-      if (block.type !== 'text') parts.push(...block.items.map((item) => item.text))
-    }
-  }
-  return parts.join('\n')
 }
 
 /**

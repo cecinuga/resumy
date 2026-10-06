@@ -16,9 +16,12 @@ export function useServiceWorker(): void {
   const { updateServiceWorker } = useRegisterSW({
     onOfflineReady: () => toast({ message: 'Resumy is ready to work offline.' }),
     onNeedRefresh: () =>
+      // Without an answer the new version waits until every tab is closed,
+      // which for an installed app can be a long time: the prompt stays.
       toast({
         message: 'A new version of Resumy is ready.',
         action: { label: 'Reload', onClick: () => void updateServiceWorker() },
+        persistent: true,
       }),
     onRegisteredSW: (_url, registration) => {
       if (!registration) return

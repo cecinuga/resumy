@@ -75,7 +75,7 @@ interface SheetFrameProps {
   exact?: boolean
   /** One page of the preview, cut to the paper's height. */
   page?: boolean
-  contentRef?: RefObject<HTMLDivElement | null>
+  contentRef?: RefObject<HTMLDivElement>
   label?: string
 }
 

@@ -11,11 +11,14 @@ import type {
   TextItem,
 } from '../model/types'
 import {
+  findBlock,
   insertAfter,
   insertAt,
+  mapSections,
   moveBlock,
   moveItem,
   moveSection,
+  removeById,
   updateBlock,
   updateItems,
   updateSection,
@@ -23,7 +26,8 @@ import {
 
 /**
  * Every change to a resume is one of these actions. New nodes are created
- * (with their ids) by the caller, which keeps the reducer pure.
+ * (with their ids) by the caller, which keeps the reducer pure. Actions that
+ * would change nothing return the same resume, so they add no undo step.
  */
 export type ResumeAction =
   | { type: 'basics/set'; field: BasicsTextField; value: string }
@@ -41,6 +45,8 @@ export type ResumeAction =
   | { type: 'block/remove'; id: Id }
   | { type: 'block/move'; id: Id; toSectionId: Id; toIndex: number }
   | { type: 'item/add'; blockId: Id; item: TextItem; afterId?: Id }
+  /** Several items at once (a multi-line paste), undone in one step. */
+  | { type: 'item/addMany'; blockId: Id; items: TextItem[]; afterId?: Id }
   | { type: 'item/set'; blockId: Id; id: Id; text: string }
   | { type: 'item/remove'; blockId: Id; id: Id }
   | { type: 'item/move'; id: Id; toBlockId: Id; toIndex: number }
@@ -64,24 +70,31 @@ export function resumeReducer(resume: Resume, action: ResumeAction): Resume {
           links: resume.basics.links.map((link) => (link.id === action.id ? { ...link, text: action.text } : link)),
         },
       }
-    case 'link/remove':
-      return {
-        ...resume,
-        basics: { ...resume.basics, links: resume.basics.links.filter((link) => link.id !== action.id) },
-      }
+    case 'link/remove': {
+      const links = removeById(resume.basics.links, action.id)
+      return links === resume.basics.links ? resume : { ...resume, basics: { ...resume.basics, links } }
+    }
 
     case 'section/add':
+      // Re-adding a section that is already back (say, a toast's "Undo" after
+      // a history undo) would duplicate its ids.
+      if (hasSection(resume, action.section.id) || action.section.blocks.some((block) => findBlock(resume, block.id))) {
+        return resume
+      }
       return { ...resume, sections: insertAt(resume.sections, action.index ?? resume.sections.length, action.section) }
     case 'section/rename':
       return updateSection(resume, action.id, (section) => ({ ...section, title: action.title }))
     case 'section/toggle':
       return updateSection(resume, action.id, (section) => ({ ...section, hidden: !section.hidden }))
-    case 'section/remove':
-      return { ...resume, sections: resume.sections.filter((section) => section.id !== action.id) }
+    case 'section/remove': {
+      const sections = removeById(resume.sections, action.id)
+      return sections === resume.sections ? resume : { ...resume, sections }
+    }
     case 'section/move':
       return moveSection(resume, action.id, action.toIndex)
 
     case 'block/add':
+      if (findBlock(resume, action.block.id)) return resume
       return updateSection(resume, action.sectionId, (section) => ({
         ...section,
         blocks:
@@ -94,24 +107,24 @@ export function resumeReducer(resume: Resume, action: ResumeAction): Resume {
         action.field in block ? ({ ...block, [action.field]: action.value } as Block) : block,
       )
     case 'block/remove':
-      return {
-        ...resume,
-        sections: resume.sections.map((section) => ({
-          ...section,
-          blocks: section.blocks.filter((block) => block.id !== action.id),
-        })),
-      }
+      return mapSections(resume, (section) => {
+        const blocks = removeById(section.blocks, action.id)
+        return blocks === section.blocks ? section : { ...section, blocks }
+      })
     case 'block/move':
       return moveBlock(resume, action.id, action.toSectionId, action.toIndex)
 
     case 'item/add':
       return updateItems(resume, action.blockId, (items) => insertAfter(items, action.afterId, action.item))
+    case 'item/addMany':
+      if (action.items.length === 0) return resume
+      return updateItems(resume, action.blockId, (items) => insertAfter(items, action.afterId, ...action.items))
     case 'item/set':
       return updateItems(resume, action.blockId, (items) =>
         items.map((item) => (item.id === action.id ? { ...item, text: action.text } : item)),
       )
     case 'item/remove':
-      return updateItems(resume, action.blockId, (items) => items.filter((item) => item.id !== action.id))
+      return updateItems(resume, action.blockId, (items) => removeById(items, action.id))
     case 'item/move':
       return moveItem(resume, action.id, action.toBlockId, action.toIndex)
 
@@ -123,6 +136,10 @@ export function resumeReducer(resume: Resume, action: ResumeAction): Resume {
       return { ...resume, design: { ...resume.design, template: id, font: defaults.font, accent: defaults.accent } }
     }
   }
+}
+
+function hasSection(resume: Resume, id: Id): boolean {
+  return resume.sections.some((section) => section.id === id)
 }
 
 /**

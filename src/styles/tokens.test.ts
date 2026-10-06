@@ -37,6 +37,7 @@ const TEXT_PAIRS = [
   ['page-ink', 'page', 'inputs drawn on the sheet'],
   ['page-muted', 'page', 'placeholders on the sheet'],
   ['page-muted', 'page-hover', 'placeholders under the pointer'],
+  ['page-muted', 'page-empty', 'placeholders in empty fields'],
   ['page-control', 'page', 'buttons on the sheet'],
   ['page-control', 'page-hover', 'hovered buttons on the sheet'],
 ] as const
@@ -68,6 +69,11 @@ describe.each(Object.entries(themes))('%s theme', (_, tokens) => {
 })
 
 describe('tokens file', () => {
+  it('matches the theme colors public/theme.js sets before the stylesheet loads', () => {
+    const script = readFileSync(new URL('../../public/theme.js', import.meta.url), 'utf8')
+    expect(script).toContain(`theme === 'dark' ? '${themes.dark.bg}' : '${themes.light.bg}'`)
+  })
+
   it('keeps the page color identical in every theme', () => {
     expect(themes.dark.page).toBe(themes.light.page)
   })

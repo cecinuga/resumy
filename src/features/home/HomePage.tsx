@@ -1,8 +1,7 @@
 import { ArrowRight, FilePlus2, HeartHandshake, Plus, ScanText, ShieldCheck } from 'lucide-react'
-import { useId } from 'react'
+import { useId, useState } from 'react'
 import { navigate } from '../../app/router'
 import { Button } from '../../components/Button/Button'
-import { track } from '../../lib/analytics'
 import { formatRelativeTime } from '../../lib/time'
 import { createEmptyResume } from '../resume/model/factories'
 import { isResumeEmpty, resumeDisplayName } from '../resume/model/inspect'
@@ -20,7 +19,7 @@ const PROMISES = [
   {
     icon: ShieldCheck,
     title: 'Private by design',
-    text: 'No accounts, no ads, no servers. Your resume stays in this browser; we only count anonymous visits and downloads.',
+    text: 'No accounts, no ads, no cookies. Your resume stays in this browser; we only count visits and downloads.',
   },
   {
     icon: HeartHandshake,
@@ -34,11 +33,10 @@ export function HomePage() {
   const { open, confirmDialog } = useOpenResume()
   const newTitleId = useId()
   const hasDraft = resume !== null && !isResumeEmpty(resume)
+  // While a PDF is being read, starting another way would race with it.
+  const [importing, setImporting] = useState(false)
 
-  const startFromScratch = () => {
-    track({ name: 'create_resume' })
-    open(createEmptyResume())
-  }
+  const startFromScratch = () => open(createEmptyResume(), { name: 'create_resume' })
 
   return (
     <div className={styles.page}>
@@ -58,14 +56,17 @@ export function HomePage() {
               In progress{savedAt ? ` · saved ${formatRelativeTime(savedAt)}` : ''} · stored only in this browser
             </p>
           </div>
-          <Button icon={ArrowRight} onClick={() => navigate('editor')}>
+          <Button icon={ArrowRight} disabled={importing} onClick={() => navigate('editor')}>
             Continue editing
           </Button>
         </section>
       )}
 
       <div className={styles.options}>
-        <UploadCard onImported={open} />
+        <UploadCard
+          onImported={(imported, source) => open(imported, { name: 'upload_resume', params: { outcome: 'success' } }, source)}
+          onReadingChange={setImporting}
+        />
         <article className={styles.card} aria-labelledby={newTitleId}>
           <FilePlus2 className={styles.cardIcon} aria-hidden />
           <h2 id={newTitleId} className={styles.cardTitle}>
@@ -75,7 +76,7 @@ export function HomePage() {
             Begin with an empty resume and the sections recruiters expect: summary, experience, education and skills.
           </p>
           <div className={styles.cardActions}>
-            <Button icon={Plus} onClick={startFromScratch}>
+            <Button icon={Plus} disabled={importing} onClick={startFromScratch}>
               New resume
             </Button>
           </div>

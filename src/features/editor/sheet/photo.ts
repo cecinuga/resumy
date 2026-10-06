@@ -1,6 +1,12 @@
 import { RESUME_INK } from '../../resume/design/palette'
 
 const MAX_PHOTO_BYTES = 15 * 1024 * 1024
+/**
+ * A small file can hold a huge image (30,000 × 30,000 px is 3.6 GB once
+ * decoded), which crashes the tab on phones. 100 megapixels still lets
+ * through photos from 50 and 64 MP phone cameras.
+ */
+const MAX_PHOTO_PIXELS = 100_000_000
 /** Large enough for print at the size templates use, small enough for browser storage. */
 const OUTPUT_SIZE = 480
 
@@ -14,6 +20,22 @@ export function isSupportedImage(bytes: Uint8Array): boolean {
   return jpeg || png || webp
 }
 
+/** The image's size, read without decoding its pixels (an image outside the page is decoded only when drawn). */
+async function imageSize(file: Blob): Promise<{ width: number; height: number }> {
+  const url = URL.createObjectURL(file)
+  try {
+    const image = new Image()
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve()
+      image.onerror = () => reject(new Error('Unreadable image'))
+      image.src = url
+    })
+    return { width: image.naturalWidth, height: image.naturalHeight }
+  } finally {
+    URL.revokeObjectURL(url)
+  }
+}
+
 /**
  * Turns a photo into a small square JPEG data URL: centered crop, white
  * behind transparent areas, EXIF orientation applied by the browser.
@@ -23,6 +45,8 @@ export async function processPhoto(file: Blob): Promise<string> {
   if (!isSupportedImage(new Uint8Array(await file.slice(0, 12).arrayBuffer()))) {
     throw new Error('Unsupported image format')
   }
+  const { width, height } = await imageSize(file)
+  if (width * height > MAX_PHOTO_PIXELS) throw new Error('The photo is too large')
   const bitmap = await createImageBitmap(file)
   try {
     const side = Math.min(bitmap.width, bitmap.height)

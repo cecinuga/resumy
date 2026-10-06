@@ -198,6 +198,28 @@ describe('exported PDF', () => {
     expect(await restore(await exportPdf(original, edited))).toBeNull()
   })
 
+  it.each(['source-sans', 'inter', 'nunito-sans', 'source-serif', 'eb-garamond'] as const)(
+    'prints Latin Extended, Cyrillic, Greek and Vietnamese text as typed (%s)',
+    async (font) => {
+      const names = ['Łukasz Żółć', 'Олена Шевченко', 'Nguyễn Thị Hương']
+      // Nunito Sans has no Greek letters (the download warns about them instead).
+      if (font !== 'nunito-sans') names.push('Γιώργος Παπαδόπουλος')
+      const resume = createEmptyResume({ ...sampleDesign, font })
+      resume.basics.name = names[0]!
+      resume.sections = [createSection('Team', [createListBlock(names.slice(1))])]
+      const text = (await renderAndRead(resume)).map((line) => line.text.normalize('NFC')).join('\n')
+      for (const name of names) expect(text).toContain(name)
+    },
+  )
+
+  it('declares the language the resume is written in, for screen readers', async () => {
+    const english = Buffer.from(await renderToBuffer(<ResumeDocument resume={sampleResume()} />)).toString('latin1')
+    expect(english).toContain('/Lang (en)')
+    const italian = sampleResume()
+    italian.sections = [createSection('Profilo', [createTextBlock('Sviluppatrice con esperienza nella progettazione di interfacce per la banca e per il settore pubblico.')])]
+    expect(Buffer.from(await renderToBuffer(<ResumeDocument resume={italian} />)).toString('latin1')).toContain('/Lang (it)')
+  })
+
   it('renders sparse resumes without stray text nodes', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const resume = createEmptyResume(sampleDesign)

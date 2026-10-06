@@ -82,25 +82,62 @@
   gap: var(--space-1);
 }
 
-.status {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin-left: auto;
-  color: var(--text-muted);
+/* After an upload read from the layout: a word on checking it. */
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  max-width: var(--paper-width);
+  margin: 0 auto var(--space-4);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
   font-size: var(--text-sm);
 }
 
-.status svg {
+.notice > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
   color: var(--structure);
 }
 
-.status[data-failed] {
+.notice p {
+  flex: 1;
+}
+
+/* Page count and save status, at the end of the toolbar. */
+.facts {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-left: auto;
+}
+
+.fact {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+.fact svg {
+  flex-shrink: 0;
+  color: var(--structure);
+}
+
+.fact[data-failed] {
   color: var(--text);
 }
 
-.status[data-failed] svg {
+.fact[data-failed] svg {
   color: var(--accent-strong);
+}
+
+.short {
+  display: none;
 }
 
 @media (max-width: 1079px) {
@@ -114,9 +151,10 @@
     position: static;
     flex-direction: row;
     justify-content: center;
+    flex-wrap: wrap;
+    align-items: center;
     height: auto;
     padding: var(--space-2);
-    overflow-x: auto;
   }
 
   .railItem {
@@ -137,17 +175,15 @@
 }
 
 @media (max-width: 520px) {
-  .railItem span {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
+  /* Words next to the icons on phones too: the tools are easier to tell apart. */
+  .rail {
+    gap: 0;
+    padding: var(--space-1) var(--space-2);
   }
 
   .railItem {
-    padding: var(--space-2) var(--space-4);
+    gap: 6px;
+    padding: var(--space-2);
   }
 
   .canvas {
@@ -158,13 +194,16 @@
     margin-bottom: var(--space-3);
   }
 
-  /* Icon only on phones; the words stay available to screen readers. */
-  .status span {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
+  .facts {
+    gap: var(--space-3);
+  }
+
+  /* Short words on phones: "Saved", "Not saved". */
+  .long {
+    display: none;
+  }
+
+  .short {
+    display: inline;
   }
 }

@@ -32,3 +32,16 @@
 .links a {
   font-weight: var(--weight-semibold);
 }
+
+.footer[data-compact] {
+  font-size: var(--text-xs);
+}
+
+.footer[data-compact] .inner {
+  justify-content: center;
+  padding: var(--space-3) var(--space-5);
+}
+
+.footer[data-compact] .love {
+  color: var(--text-muted);
+}

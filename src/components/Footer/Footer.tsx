@@ -7,12 +7,13 @@ const AUTHOR_LINKS = [
   { label: 'Blog', href: 'https://cecinuga.dev' },
 ] as const
 
-export const Footer = memo(function Footer() {
+/** `compact`: one quiet line under the editor, where the page is a workspace rather than a site. */
+export const Footer = memo(function Footer({ compact = false }: { compact?: boolean }) {
   return (
-    <footer className={styles.footer}>
+    <footer className={styles.footer} data-compact={compact || undefined}>
       <div className={styles.inner}>
         <div className={styles.about}>
-          <p>Resumy is a free and open-source resume builder created by cecinuga.</p>
+          {!compact && <p>Resumy is a free and open-source resume builder created by Cecinuga.</p>}
           <p className={styles.love}>Made with love by Cecinuga ❤️</p>
         </div>
         <nav aria-label="Author" className={styles.links}>

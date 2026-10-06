@@ -9,19 +9,38 @@ export interface Draft {
   savedAt: number
 }
 
-/** Reads the draft kept in this browser, if any and if still valid. */
-export function loadDraft(): Draft | null {
+/**
+ * The draft kept in this browser: 'none' when there is none, 'invalid' when
+ * what is stored can't be read (corrupt, or from a newer version).
+ */
+export function readDraft(): Draft | 'none' | 'invalid' {
   const raw = storage.get(DRAFT_KEY)
-  if (!raw) return null
+  if (!raw) return 'none'
   try {
     const parsed: unknown = JSON.parse(raw)
-    if (typeof parsed !== 'object' || parsed === null) return null
+    if (typeof parsed !== 'object' || parsed === null) return 'invalid'
     const { resume, savedAt } = parsed as { resume?: unknown; savedAt?: unknown }
     const normalized = normalizeResume(resume)
-    return normalized ? { resume: normalized, savedAt: typeof savedAt === 'number' ? savedAt : Date.now() } : null
+    return normalized ? { resume: normalized, savedAt: typeof savedAt === 'number' ? savedAt : Date.now() } : 'invalid'
   } catch {
-    return null
+    return 'invalid'
   }
+}
+
+/** Reads the draft kept in this browser, if any and if still valid. */
+export function loadDraft(): Draft | null {
+  const draft = readDraft()
+  return typeof draft === 'string' ? null : draft
+}
+
+/** Calls `onChange` when another tab writes or deletes the draft. */
+export function onDraftChangedElsewhere(onChange: () => void): () => void {
+  const listener = (event: StorageEvent) => {
+    // A null key means another tab cleared all of storage.
+    if (event.key === DRAFT_KEY || event.key === null) onChange()
+  }
+  window.addEventListener('storage', listener)
+  return () => window.removeEventListener('storage', listener)
 }
 
 /** Stores (or, for null, deletes) the draft. Returns false if the browser refused. */

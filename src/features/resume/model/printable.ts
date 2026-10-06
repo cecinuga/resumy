@@ -64,6 +64,21 @@ function trimItems<T extends { text: string }>(items: readonly T[]): T[] {
   return items.map((item) => ({ ...item, text: item.text.trim() })).filter((item) => item.text)
 }
 
+/** Every piece of text a resume prints, in any order. Pass the printable resume. */
+export function printedText({ basics, sections }: Resume): string {
+  const parts = [basics.name, basics.headline, basics.email, basics.phone, basics.location, ...basics.links.map((link) => link.text)]
+  for (const section of sections) {
+    parts.push(section.title)
+    for (const block of section.blocks) {
+      if (block.type === 'entry') parts.push(block.title, block.subtitle, block.date, block.location)
+      if (block.type === 'text') parts.push(block.text)
+      if (block.type === 'tags') parts.push(block.label)
+      if (block.type !== 'text') parts.push(...block.items.map((item) => item.text))
+    }
+  }
+  return parts.join('\n')
+}
+
 /** Contact details in display order, with the link each one opens. */
 export function contactEntries(basics: Basics): { key: string; text: string; href?: string }[] {
   const entries: { key: string; text: string; href?: string }[] = []

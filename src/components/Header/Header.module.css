@@ -51,19 +51,29 @@
     padding: 0 var(--space-4);
   }
 
-  /* Buttons fold down to their icon on narrow screens. */
-  .collapsible {
-    width: 40px;
+  /* A small icon on phones: the GitHub link stays, without competing with the primary action. */
+  .github {
+    width: 32px;
+    height: 32px;
     padding: 0;
+    border-radius: var(--radius-sm);
   }
 
-  .collapsible .label {
+  .github .label {
     position: absolute;
     width: 1px;
     height: 1px;
     overflow: hidden;
     clip: rect(0 0 0 0);
     white-space: nowrap;
+  }
+
+  .install {
+    padding: 0 var(--space-3);
+  }
+
+  .actions[data-has-primary] .install {
+    display: none;
   }
 }
 

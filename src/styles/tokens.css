@@ -23,6 +23,7 @@
   --page-control: #3F5B45;  /* handles and add buttons */
   --page-hover: #F3F0E3;    /* editable field hover */
   --page-guide: #C9C4B0;    /* page break guide */
+  --page-empty: #F7F5EC;    /* an empty field waiting to be filled */
 
   /* Additions to the base palette */
   --github: #5E4B8B;          /* heather purple: the GitHub button */

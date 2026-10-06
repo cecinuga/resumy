@@ -26,6 +26,48 @@
   outline-color: var(--page-control);
 }
 
+/* The page exactly as printed, whatever the screen: for the preview and for measuring it. */
+.frame[data-exact] {
+  flex-shrink: 0;
+  width: var(--r-paper-width);
+  max-width: none;
+}
+
+/* One page of the preview: the paper's height, showing its slice of the content. */
+.frame[data-page] {
+  height: var(--r-paper-height);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.pageWindow {
+  overflow: hidden;
+}
+
+/* The preview's pages, scaled down (from the top left) on screens narrower than the paper. */
+.pages {
+  width: 100%;
+  overflow-x: clip;
+}
+
+.pageStack {
+  display: grid;
+  margin-inline: auto;
+  transform-origin: top left;
+}
+
+/* A hidden copy of the preview at the paper's width, measured to find the page breaks. */
+.measure {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 /* ---------- Header ---------- */
 
 .header {
@@ -119,6 +161,19 @@
 .section {
   position: relative;
   margin-bottom: var(--r-gap-section);
+}
+
+/*
+ * The PDF engine never collapses margins: a paragraph's margin adds to its
+ * section's, a last bullet's to its entry's. Containers that start their own
+ * formatting context do the same here, so lines sit where the PDF puts them
+ * and page breaks fall in the same places.
+ */
+.section,
+.entry,
+.bullets,
+.dropZone {
+  display: flow-root;
 }
 
 .headingBox {
@@ -254,10 +309,29 @@
   background: transparent;
 }
 
+/*
+ * Empty fields read as blanks to fill in, never as content: a light tint
+ * and an italic hint ("Jan 2022 – Present" in a field that is still empty).
+ */
+.editable:empty {
+  background: var(--page-empty);
+  box-shadow: 0 0 0 2px var(--page-empty);
+}
+
+.editable:empty:hover {
+  background: var(--page-hover);
+  box-shadow: 0 0 0 2px var(--page-hover);
+}
+
+.editable:empty:focus {
+  background: transparent;
+  box-shadow: none;
+}
+
 .editable:empty::before {
   content: attr(data-placeholder);
   color: var(--page-muted);
-  font-style: normal;
+  font-style: italic;
   font-weight: 400;
   text-transform: none;
   pointer-events: none;
@@ -265,6 +339,11 @@
 
 span.editable {
   display: inline-block;
+}
+
+/* The text box inside an editable heading fills it, like the heading did. */
+span.editableBlock {
+  display: block;
 }
 
 /* Tools appear around the element under the pointer or keyboard focus. */
@@ -286,11 +365,33 @@ span.editable {
   position: relative;
 }
 
+/* A bullet's remove button, in the right margin at the end of its line. */
+.bulletRow > .bulletEnd {
+  right: auto;
+  left: 100%;
+  padding: 0 0 0 4px;
+}
+
 .block:hover > .tools,
 .block:focus-within > .tools,
 .bulletRow:hover > .tools,
 .bulletRow:focus-within > .tools {
   opacity: 1;
+}
+
+/* An imported entry that may have come through wrong, until it is edited. */
+.block[data-review] {
+  border-radius: 2px;
+  outline: 1.5px dashed var(--page-control);
+  outline-offset: 4px;
+}
+
+.reviewMark {
+  margin-bottom: 3pt;
+  color: var(--page-control);
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
 }
 
 .handle {
@@ -575,6 +676,11 @@ span.editable {
     padding: 0 0 0 2px;
   }
 
+  /* Under the handle, beside the bullet being edited. */
+  .bulletRow > .bulletEnd {
+    top: 26px;
+  }
+
   .photoActions {
     opacity: 1;
   }
@@ -582,7 +688,7 @@ span.editable {
 
 @media (max-width: 720px) {
   /* The left margin fits the tools of a block. */
-  .frame {
+  .frame:not([data-exact]) {
     min-height: 0;
     padding: 28px 16px 28px 30px;
   }
@@ -604,7 +710,30 @@ span.editable {
 
 @media (max-width: 720px) and (hover: none) {
   /* Room for the handle of the bullet being edited. */
-  .frame {
+  .frame:not([data-exact]) {
     padding-right: 26px;
+  }
+}
+
+/*
+ * On touch screens, small tools get a thumb-sized tap area (40px, 36px for a
+ * tag's ×) from an invisible layer, without growing on the page.
+ */
+@media (pointer: coarse) {
+  .handle,
+  .iconTool {
+    position: relative;
+  }
+
+  .handle::after,
+  .iconTool::after {
+    content: '';
+    position: absolute;
+    inset: -8px;
+  }
+
+  .chip .handle::after,
+  .chip .iconTool::after {
+    inset: -9px;
   }
 }

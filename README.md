@@ -49,7 +49,7 @@ Press **Download PDF** in the top right corner. The file is named after you, rea
 - **Nothing is uploaded.** Your PDF is read, and your new one is created, inside your browser.
 - **Your work is saved as you type**, in this browser only. Come back later and pick up where you left off with **Continue editing**, or press **Start over** to clear it.
 - **Keep your PDF.** Clearing your browser data also deletes your draft. The PDF you download is your copy: upload it to Resumy again whenever you want to update it.
-- **Only anonymous counts.** Resumy counts visits, new resumes, uploads and downloads to know whether it's useful. It never sees what you write, and it doesn't count you at all if your browser asks sites not to track you.
+- **Only counts, no cookies.** Resumy counts visits, new resumes, uploads and downloads to know whether it's useful, without storing cookies or any identifier on your device. It never sees what you write, and it doesn't count you at all if your browser asks sites not to track you.
 
 ## Light or dark, on any screen
 

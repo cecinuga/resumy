@@ -39,7 +39,16 @@ export function updateBlock(resume: Resume, id: Id, fn: (block: Block) => Block)
 }
 
 export function updateItems(resume: Resume, blockId: Id, fn: (items: TextItem[]) => TextItem[]): Resume {
-  return updateBlock(resume, blockId, (block) => (hasItems(block) ? { ...block, items: fn(block.items) } : block))
+  return updateBlock(resume, blockId, (block) => {
+    if (!hasItems(block)) return block
+    const items = fn(block.items)
+    return items === block.items ? block : { ...block, items }
+  })
+}
+
+/** Removes the element with `id`, returning the original list when there is none. */
+export function removeById<T extends { id: Id }>(list: T[], id: Id): T[] {
+  return list.some((entry) => entry.id === id) ? list.filter((entry) => entry.id !== id) : list
 }
 
 export function insertAt<T>(list: readonly T[], index: number, value: T): T[] {
@@ -48,9 +57,10 @@ export function insertAt<T>(list: readonly T[], index: number, value: T): T[] {
 }
 
 /** Inserts after the element with `afterId`, or at the end when there is none. */
-export function insertAfter<T extends { id: Id }>(list: readonly T[], afterId: Id | undefined, value: T): T[] {
+export function insertAfter<T extends { id: Id }>(list: readonly T[], afterId: Id | undefined, ...values: T[]): T[] {
   const index = list.findIndex((entry) => entry.id === afterId)
-  return insertAt(list, index === -1 ? list.length : index + 1, value)
+  const at = index === -1 ? list.length : index + 1
+  return [...list.slice(0, at), ...values, ...list.slice(at)]
 }
 
 export function moveWithin<T>(list: readonly T[], from: number, to: number): T[] {

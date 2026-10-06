@@ -1,7 +1,7 @@
 /**
  * Where the PDF's pages will break. The PDF engine moves to the next page
  * whatever doesn't fit: an entry's title lines and each bullet move whole,
- * a heading moves when too little room is left under it, and paragraphs
+ * a heading moves along with the start of its section, and paragraphs
  * break between lines. The same rules, applied to the measured preview,
  * give the same page count and the same first element on every page.
  */
@@ -34,10 +34,16 @@ const MIN_LINES = 2
 /** Rounding slack, in pixels. */
 const EPSILON = 0.5
 
+/** The part of a unit that can't be left behind: all of it, or its first lines. */
+function firstPart(unit: PageUnit): number {
+  const height = unit.bottom - unit.top
+  return unit.rule === 'lines' && unit.lineHeight > 0 ? Math.min(height, unit.lineHeight * MIN_LINES) : height
+}
+
 /**
  * The page breaks of content made of `units`, in reading order, on pages
- * that hold `pageHeight` pixels each. A heading needs `headingRoom` pixels
- * of content below it on its page.
+ * that hold `pageHeight` pixels each. A heading stays with the first part
+ * of what follows it, and with at least `headingRoom` pixels below it.
  */
 export function paginate(units: readonly PageUnit[], pageHeight: number, headingRoom: number): PageBreak[] {
   const breaks: PageBreak[] = []
@@ -45,11 +51,17 @@ export function paginate(units: readonly PageUnit[], pageHeight: number, heading
   let shift = 0
   let pageEnd = pageHeight
 
-  for (const unit of units) {
+  units.forEach((unit, index) => {
+    const next = units[index + 1]
     for (let guard = 0; guard < 100; guard += 1) {
       const top = unit.top + shift
       const bottom = unit.bottom + shift
-      const needed = bottom + (unit.rule === 'heading' ? headingRoom : 0)
+      let needed = bottom
+      if (unit.rule === 'heading') {
+        needed = Math.max(bottom + headingRoom, next ? next.top + shift + firstPart(next) : bottom)
+        // A heading taller than a page with what follows would move forever: let it be.
+        if (needed - top > pageHeight) needed = bottom
+      }
       if (needed <= pageEnd + EPSILON) break
 
       let start = top
@@ -71,7 +83,7 @@ export function paginate(units: readonly PageUnit[], pageHeight: number, heading
       shift += pageEnd - start
       pageEnd += pageHeight
     }
-  }
+  })
   return breaks
 }
 

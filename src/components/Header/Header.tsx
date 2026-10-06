@@ -28,26 +28,28 @@ export const Header = memo(function Header({ primaryAction }: HeaderProps) {
           </span>
           <span className={styles.logoText}>Resumy</span>
         </AppLink>
-        <div className={styles.actions}>
-          {installApp && (
-            <Button variant="quiet" iconOnly icon={MonitorDown} onClick={installApp}>
-              Install Resumy as an app
-            </Button>
-          )}
-          <Button variant="quiet" iconOnly icon={theme === 'dark' ? Sun : Moon} onClick={toggleTheme}>
-            {`Switch to ${nextTheme} theme`}
-          </Button>
+        <div className={styles.actions} data-has-primary={primaryAction ? '' : undefined}>
+          {/* First, and smaller on phones: well away from the page's primary action. */}
           <LinkButton
             variant="github"
             icon={GithubMark}
             href={REPOSITORY_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className={styles.collapsible}
+            className={styles.github}
             title="Resumy on GitHub"
           >
             <span className={styles.label}>GitHub</span>
           </LinkButton>
+          {installApp && (
+            // In the editor on phones, the tools' "More actions" menu offers it instead.
+            <Button variant="quiet" icon={MonitorDown} onClick={installApp} className={styles.install} aria-label="Install Resumy as an app" title="Install Resumy as an app">
+              Install
+            </Button>
+          )}
+          <Button variant="quiet" iconOnly icon={theme === 'dark' ? Sun : Moon} onClick={toggleTheme}>
+            {`Switch to ${nextTheme} theme`}
+          </Button>
           {primaryAction}
         </div>
       </div>

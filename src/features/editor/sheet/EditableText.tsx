@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, type ClipboardEvent, type KeyboardEvent, type RefObject } from 'react'
 import { useBackspace } from './backspace'
-import { focusAdjacentField } from './focus'
+import { adjacentField, claimFocus, focusAdjacentField, focusField } from './focus'
 import styles from './Sheet.module.css'
 
 type Tag = 'span' | 'div' | 'p' | 'h2' | 'h3'
@@ -79,8 +79,21 @@ export function EditableText({
 
   useBackspace(ref, {
     isEmpty: () => !ref.current || !readText(ref.current, multiline),
-    onLeave: onDeleteEmpty,
+    onLeave:
+      onDeleteEmpty &&
+      (() => {
+        const element = ref.current
+        const previous = element && adjacentField(element, -1)?.dataset.field
+        onDeleteEmpty()
+        // Nothing took the focus (e.g. the first bullet of an entry): the field before it does.
+        if (element && document.activeElement === element && previous) focusField(previous)
+      }),
   })
+
+  // A field added on request (Enter, "Add bullet") takes the focus as it appears.
+  useLayoutEffect(() => {
+    if (ref.current) claimFocus(fieldId, ref.current)
+  }, [fieldId])
 
   // Writes the text on mount and when the value changes from elsewhere.
   useLayoutEffect(() => {
@@ -131,12 +144,14 @@ export function EditableText({
     }
   }
 
+  // A heading keeps its role: the text box goes inside it rather than replacing it.
+  const isHeading = as === 'h2' || as === 'h3'
   // All supported tags share the HTMLElement API this component uses.
-  const Tag = as as 'span'
-  return (
+  const Tag = (isHeading ? 'span' : as) as 'span'
+  const field = (
     <Tag
       ref={ref as RefObject<HTMLSpanElement>}
-      className={[styles.editable, className].filter(Boolean).join(' ')}
+      className={[styles.editable, isHeading ? styles.editableBlock : className].filter(Boolean).join(' ')}
       contentEditable={supportsPlaintextOnly ? 'plaintext-only' : 'true'}
       suppressContentEditableWarning
       role="textbox"
@@ -151,4 +166,7 @@ export function EditableText({
       onPaste={onPaste}
     />
   )
+  if (!isHeading) return field
+  const Heading = as
+  return <Heading className={className}>{field}</Heading>
 }

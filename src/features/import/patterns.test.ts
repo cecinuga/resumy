@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { splitList } from '../../lib/text'
-import { findDateRange, findPhone, isBullet, isLocation, stripBullet, toNameCase, toSentenceCase } from './patterns'
+import { EMAIL, findDateRange, findPhone, isBullet, isLocation, stripBullet, toNameCase, toSentenceCase } from './patterns'
 
 describe('findDateRange', () => {
   it.each([
@@ -68,5 +68,14 @@ describe('text helpers', () => {
       'Spanish',
       'German',
     ])
+  })
+})
+
+describe('EMAIL', () => {
+  it('finds addresses but scans a long run of letters without one quickly', () => {
+    expect(EMAIL.exec('Write to jane.doe@example.com today')?.[0]).toBe('jane.doe@example.com')
+    const start = performance.now()
+    expect(EMAIL.test('a'.repeat(50_000))).toBe(false)
+    expect(performance.now() - start).toBeLessThan(200)
   })
 })

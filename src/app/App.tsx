@@ -8,12 +8,14 @@ import { HomePage } from '../features/home/HomePage'
 import { useResumeState } from '../features/resume/state/context'
 import { ResumeProvider } from '../features/resume/state/ResumeProvider'
 import { track } from '../lib/analytics'
+import { retryOnce } from '../lib/retry'
 import styles from './App.module.css'
+import { ErrorBoundary } from './ErrorBoundary'
 import { navigate, pathFor, routeFromPath, useRoute, type Route } from './router'
 import { useServiceWorker } from './serviceWorker'
 
 // The editor (and its drag-and-drop engine) loads only when it is needed.
-const EditorPage = lazy(() => import('../features/editor/EditorPage'))
+const EditorPage = lazy(() => retryOnce(() => import('../features/editor/EditorPage')))
 
 // A constant element keeps the (memoized) header from re-rendering with every keystroke.
 const DOWNLOAD_BUTTON = <DownloadButton />
@@ -63,15 +65,17 @@ function Shell() {
       </a>
       <Header primaryAction={page === 'editor' ? DOWNLOAD_BUTTON : undefined} />
       <main id="main" ref={mainRef} tabIndex={-1} className={styles.main}>
-        {page === 'editor' ? (
-          <Suspense fallback={<p className={styles.loading}>Opening the editor…</p>}>
-            <EditorPage />
-          </Suspense>
-        ) : (
-          <HomePage />
-        )}
+        <ErrorBoundary key={page}>
+          {page === 'editor' ? (
+            <Suspense fallback={<p className={styles.loading}>Opening the editor…</p>}>
+              <EditorPage />
+            </Suspense>
+          ) : (
+            <HomePage />
+          )}
+        </ErrorBoundary>
       </main>
-      <Footer />
+      <Footer compact={page === 'editor'} />
     </div>
   )
 }

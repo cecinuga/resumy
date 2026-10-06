@@ -1,6 +1,6 @@
 import { rectSortingStrategy, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Plus, X } from 'lucide-react'
-import { memo, useRef, useState } from 'react'
+import { memo, useMemo, useRef, useState } from 'react'
 import { Button } from '../../../components/Button/Button'
 import { splitList } from '../../../lib/text'
 import { createItem } from '../../resume/model/factories'
@@ -10,10 +10,12 @@ import { useBackspace } from './backspace'
 import { DragHandle } from './dnd'
 import { useDropZone, useSortableNode, useStableIds } from './sortable'
 import { EditableText } from './EditableText'
-import { fieldIds, focusField } from './focus'
+import { adjacentField, fieldIds, focusField } from './focus'
+import { excerpt } from './labels'
 import styles from './Sheet.module.css'
 
-export function BlockEditor({ block, datesRight }: { block: Block; datesRight: boolean }) {
+/** Memoized: a block's fields only change with the block, not with the drag-and-drop state around it. */
+export const BlockEditor = memo(function BlockEditor({ block, datesRight }: { block: Block; datesRight: boolean }) {
   switch (block.type) {
     case 'entry':
       return <EntryEditor entry={block} datesRight={datesRight} />
@@ -24,7 +26,7 @@ export function BlockEditor({ block, datesRight }: { block: Block; datesRight: b
     case 'tags':
       return <TagsEditor block={block} />
   }
-}
+})
 
 function useBlockField(blockId: string) {
   const { dispatch } = useResumeActions()
@@ -100,21 +102,28 @@ function TextEditor({ block }: { block: Extract<Block, { type: 'text' }> }) {
   )
 }
 
-/** Adds bullets after `afterId` (at the end without one) and focuses the last of them. */
+/** Adds bullets after `afterId` (at the end without one), as one undo step, and focuses the last of them. */
 function addBullets(
   dispatch: ResumeActions['dispatch'],
   blockId: string,
   afterId: string | undefined,
   texts: readonly string[] = [''],
 ): void {
-  let previous = afterId
-  let last: TextItem | null = null
-  for (const text of texts) {
-    last = createItem(text)
-    dispatch({ type: 'item/add', blockId, item: last, afterId: previous })
-    previous = last.id
-  }
+  const items = texts.map((text) => createItem(text))
+  dispatch({ type: 'item/addMany', blockId, items, afterId })
+  const last = items.at(-1)
   if (last) focusField(fieldIds.item(last.id))
+}
+
+/**
+ * Removes a bullet. The focus moves first, to the bullet above or else the
+ * field before it, so it is never left on a field that is going away.
+ */
+function removeBullet(dispatch: ResumeActions['dispatch'], blockId: string, id: string, previousId: string | undefined): void {
+  const field = document.querySelector<HTMLElement>(`[data-field="${CSS.escape(fieldIds.item(id))}"]`)
+  const before = previousId ? fieldIds.item(previousId) : field && adjacentField(field, -1)?.dataset.field
+  if (before) focusField(before)
+  dispatch({ type: 'item/remove', blockId, id })
 }
 
 /** Bullets of an entry or a list: editable, reorderable, movable to other lists. */
@@ -151,19 +160,12 @@ interface BulletEditorProps {
 /** One bullet. Memoized: typing in a bullet leaves the others alone. */
 const BulletEditor = memo(function BulletEditor({ item, blockId, previousId }: BulletEditorProps) {
   const { dispatch } = useResumeActions()
-  const label = item.text ? `bullet “${item.text.slice(0, 40)}”` : 'empty bullet'
+  const label = item.text ? `bullet “${excerpt(item.text)}”` : 'empty bullet'
   const { nodeProps, handleProps } = useSortableNode(item.id, { level: 'bullet', containerId: blockId, label })
 
-  const remove = () => {
-    dispatch({ type: 'item/remove', blockId, id: item.id })
-    if (previousId) focusField(fieldIds.item(previousId))
-  }
-
-  return (
-    <li {...nodeProps} className={`${styles.bullet} ${styles.bulletRow}`}>
-      <div className={styles.tools}>
-        <DragHandle {...handleProps} label={`Move ${label}`} />
-      </div>
+  // dnd-kit re-renders every bullet while something is dragged; the field only changes with the bullet.
+  const field = useMemo(
+    () => (
       <EditableText
         className={styles.bulletText}
         value={item.text}
@@ -172,9 +174,31 @@ const BulletEditor = memo(function BulletEditor({ item, blockId, previousId }: B
         placeholder="Describe an achievement, ideally with a number"
         fieldId={fieldIds.item(item.id)}
         onEnter={() => addBullets(dispatch, blockId, item.id)}
-        onDeleteEmpty={remove}
+        onDeleteEmpty={() => removeBullet(dispatch, blockId, item.id, previousId)}
         onPasteLines={(lines) => addBullets(dispatch, blockId, item.id, lines)}
       />
+    ),
+    [dispatch, blockId, item.id, item.text, previousId],
+  )
+
+  return (
+    <li {...nodeProps} className={`${styles.bullet} ${styles.bulletRow}`}>
+      <div className={styles.tools}>
+        <DragHandle {...handleProps} label={`Move ${label}`} />
+      </div>
+      {field}
+      {/* At the end of the bullet, clear of the tools of its entry. */}
+      <div className={`${styles.tools} ${styles.bulletEnd}`}>
+        <button
+          type="button"
+          className={styles.iconTool}
+          onClick={() => removeBullet(dispatch, blockId, item.id, previousId)}
+          aria-label={`Remove ${label}`}
+          title="Remove bullet"
+        >
+          <X aria-hidden />
+        </button>
+      </div>
     </li>
   )
 })
@@ -196,12 +220,8 @@ function TagsEditor({ block }: { block: TagsBlock }) {
   })
 
   const commit = (text: string) => {
-    let previous = block.items.at(-1)?.id
-    for (const value of splitList(text)) {
-      const item = createItem(value)
-      dispatch({ type: 'item/add', blockId: block.id, item, afterId: previous })
-      previous = item.id
-    }
+    // "Go, Rust, Zig" pasted at once is one undo step.
+    dispatch({ type: 'item/addMany', blockId: block.id, items: splitList(text).map((value) => createItem(value)) })
     setDraft('')
   }
 
@@ -252,28 +272,37 @@ function TagsEditor({ block }: { block: TagsBlock }) {
 const TagChip = memo(function TagChip({ item, blockId }: { item: TextItem; blockId: string }) {
   const { dispatch } = useResumeActions()
   const label = item.text ? `“${item.text}”` : 'empty item'
-  const inputId = fieldIds.tagInput(blockId)
   const { nodeProps, handleProps } = useSortableNode(item.id, { level: 'tag', containerId: blockId, label })
 
-  const onRemove = () => {
-    dispatch({ type: 'item/remove', blockId, id: item.id })
-    focusField(inputId)
-  }
+  // Like bullets: the field and its remove button only change with the tag.
+  const content = useMemo(() => {
+    const inputId = fieldIds.tagInput(blockId)
+    const remove = () => {
+      dispatch({ type: 'item/remove', blockId, id: item.id })
+      focusField(inputId)
+    }
+    return (
+      <>
+        <EditableText
+          value={item.text}
+          onChange={(text) => dispatch({ type: 'item/set', blockId, id: item.id, text })}
+          label="Item"
+          placeholder="Item"
+          fieldId={fieldIds.item(item.id)}
+          onEnter={() => focusField(inputId)}
+          onDeleteEmpty={remove}
+        />
+        <button type="button" className={styles.iconTool} onClick={remove} aria-label={`Remove ${label}`} title="Remove">
+          <X aria-hidden />
+        </button>
+      </>
+    )
+  }, [dispatch, blockId, item.id, item.text, label])
+
   return (
     <span {...nodeProps} className={styles.chip}>
       <DragHandle {...handleProps} label={`Move ${label}`} />
-      <EditableText
-        value={item.text}
-        onChange={(text) => dispatch({ type: 'item/set', blockId, id: item.id, text })}
-        label="Item"
-        placeholder="Item"
-        fieldId={fieldIds.item(item.id)}
-        onEnter={() => focusField(inputId)}
-        onDeleteEmpty={onRemove}
-      />
-      <button type="button" className={styles.iconTool} onClick={onRemove} aria-label={`Remove ${label}`} title="Remove">
-        <X aria-hidden />
-      </button>
+      {content}
     </span>
   )
 })

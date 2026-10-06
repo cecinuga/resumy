@@ -47,6 +47,49 @@ describe('resumeReducer moves', () => {
     expect(restored.sections.map((entry) => entry.id)).toEqual(resume.sections.map((entry) => entry.id))
   })
 
+  it('does not add a section or block that is already there', () => {
+    const resume = sampleResume()
+    const section = resume.sections[1]!
+    const block = section.blocks[0]!
+    expect(resumeReducer(resume, { type: 'section/add', section, index: 1 })).toBe(resume)
+    expect(resumeReducer(resume, { type: 'block/add', sectionId: resume.sections[2]!.id, block })).toBe(resume)
+    // A removed section whose block has since moved elsewhere would duplicate that block.
+    const moved = resumeReducer(resume, { type: 'block/move', id: block.id, toSectionId: resume.sections[2]!.id, toIndex: 0 })
+    const removed = resumeReducer(moved, { type: 'section/remove', id: section.id })
+    expect(resumeReducer(removed, { type: 'section/add', section, index: 1 })).toBe(removed)
+  })
+
+  it('returns the same resume when there is nothing to remove', () => {
+    const resume = sampleResume()
+    const actions: ResumeAction[] = [
+      { type: 'section/remove', id: 'missing' },
+      { type: 'block/remove', id: 'missing' },
+      { type: 'link/remove', id: 'missing' },
+      { type: 'item/remove', blockId: job(resume, 0).id, id: 'missing' },
+      { type: 'item/addMany', blockId: job(resume, 0).id, items: [] },
+    ]
+    for (const action of actions) {
+      expect(resumeReducer(resume, action), action.type).toBe(resume)
+    }
+  })
+
+  it('keeps untouched sections when removing a block', () => {
+    const resume = sampleResume()
+    const next = resumeReducer(resume, { type: 'block/remove', id: job(resume, 1).id })
+    expect(experience(next).blocks).toHaveLength(1)
+    next.sections.forEach((section, index) => {
+      if (index !== 1) expect(section).toBe(resume.sections[index])
+    })
+  })
+
+  it('adds several items in order after a given one', () => {
+    const resume = sampleResume()
+    const [first, second] = job(resume, 0).items
+    const items = [createItem('One'), createItem('Two')]
+    const next = resumeReducer(resume, { type: 'item/addMany', blockId: job(resume, 0).id, items, afterId: first!.id })
+    expect(job(next, 0).items.slice(0, 4).map((item) => item.text)).toEqual([first!.text, 'One', 'Two', second!.text])
+  })
+
   it('applies a template together with its font and color', () => {
     const next = resumeReducer(sampleResume(), { type: 'design/template', template: 'elegant' })
     expect(next.design).toMatchObject({ template: 'elegant', font: 'eb-garamond', accent: '#7A2E3A' })
@@ -92,6 +135,25 @@ describe('editorReducer history', () => {
     state = editorReducer(state, { type: 'undo' })
     state = edit(state, { type: 'design/set', patch: { paper: 'letter' } })
     expect(state.future).toHaveLength(0)
+  })
+
+  it('undoes a multi-line paste in one step', () => {
+    let state = start()
+    const block = job(state.resume!, 0)
+    state = edit(state, { type: 'item/addMany', blockId: block.id, items: [createItem('One'), createItem('Two'), createItem('Three')] })
+    expect(state.past).toHaveLength(1)
+    state = editorReducer(state, { type: 'undo' })
+    expect(job(state.resume!, 0).items).toEqual(block.items)
+  })
+
+  it('ignores a toast Undo after the history already restored the section', () => {
+    let state = start()
+    const section = experience(state.resume!)
+    state = edit(state, { type: 'section/remove', id: section.id })
+    state = editorReducer(state, { type: 'undo' })
+    const restored = edit(state, { type: 'section/add', section, index: 1 })
+    expect(restored).toBe(state)
+    expect(restored.resume!.sections.filter((entry) => entry.id === section.id)).toHaveLength(1)
   })
 
   it('ignores edits that change nothing and resets on load', () => {

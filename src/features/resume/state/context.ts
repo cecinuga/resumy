@@ -8,6 +8,8 @@ export interface ResumeState {
   canRedo: boolean
   /** When the draft was last written to this browser's storage. */
   savedAt: number | null
+  /** True from an edit until it is written to storage (a short pause after typing stops). */
+  saving: boolean
   /** True when the browser refused to store the draft (private mode, quota). */
   saveFailed: boolean
 }

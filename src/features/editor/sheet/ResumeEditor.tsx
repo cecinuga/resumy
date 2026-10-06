@@ -2,9 +2,9 @@ import { ListPlus } from 'lucide-react'
 import { MenuButton } from '../../../components/Menu/MenuButton'
 import type { ResolvedDesign } from '../../resume/design/resolve'
 import { createSectionFromPreset } from '../../resume/model/factories'
-import { SECTION_PRESETS } from '../../resume/model/sectionPresets'
 import type { Resume } from '../../resume/model/types'
 import { useResumeActions } from '../../resume/state/context'
+import { addableSections } from '../sectionChoices'
 import { SheetDnd } from './dnd'
 import { fieldIds, focusField } from './focus'
 import { HeaderEditor } from './HeaderEditor'
@@ -16,7 +16,7 @@ export function ResumeEditor({ resume, design }: { resume: Resume; design: Resol
   const { dispatch } = useResumeActions()
   const datesRight = design.template.entry.datePlacement === 'right'
 
-  const sectionMenu = SECTION_PRESETS.map((preset) => ({
+  const sectionMenu = addableSections(resume.sections).map((preset) => ({
     id: preset.id,
     label: preset.title,
     onSelect: () => {

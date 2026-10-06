@@ -97,6 +97,13 @@
   font-size: var(--text-sm);
 }
 
+/* Touch screens have nothing to drop a file with. */
+@media (hover: none) and (pointer: coarse) {
+  .dropHint {
+    display: none;
+  }
+}
+
 .error {
   display: flex;
   align-items: flex-start;

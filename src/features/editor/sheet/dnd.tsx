@@ -2,14 +2,14 @@ import {
   closestCenter,
   DndContext,
   DragOverlay,
-  pointerWithin,
   type Announcements,
+  type Collision,
   type CollisionDetection,
   type DragEndEvent,
   type DragOverEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
-import { forwardRef, useState, type ButtonHTMLAttributes, type ReactNode } from 'react'
+import { forwardRef, memo, useState, type ButtonHTMLAttributes, type ReactNode } from 'react'
 import { hasItems, type Id, type Resume } from '../../resume/model/types'
 import { useResumeActions } from '../../resume/state/context'
 import { findBlock, findItem, moveBlock, moveItem } from '../../resume/state/operations'
@@ -45,6 +45,35 @@ function move(resume: Resume, level: DragLevel, id: Id, to: Position): Resume {
 
 const dataOf = (entry: { data: { current?: unknown } } | null | undefined) =>
   entry?.data.current as DragData | undefined
+
+const distance = (x1: number, y1: number, x2: number, y2: number) => Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+
+/**
+ * dnd-kit's pointerWithin, with the same results but cheaper. Each edge of
+ * its rects re-reads the scroll position of the page, and every pointer move
+ * checks a hundred or more targets. The vertical test comes first, so most
+ * targets cost one read instead of eight.
+ */
+const pointerWithin: CollisionDetection = ({ droppableContainers, droppableRects, pointerCoordinates }) => {
+  if (!pointerCoordinates) return []
+  const { x, y } = pointerCoordinates
+  const hits: { collision: Collision; value: number }[] = []
+  for (const droppableContainer of droppableContainers) {
+    const rect = droppableRects.get(droppableContainer.id)
+    if (!rect) continue
+    const top = rect.top
+    const bottom = top + rect.height
+    if (y < top || y > bottom) continue
+    const left = rect.left
+    const right = left + rect.width
+    if (x < left || x > right) continue
+    // Ordered like dnd-kit's: by the mean distance from the pointer to the corners.
+    const corners = distance(x, y, left, top) + distance(x, y, right, top) + distance(x, y, left, bottom) + distance(x, y, right, bottom)
+    const value = Number((corners / 4).toFixed(4))
+    hits.push({ collision: { id: droppableContainer.id, data: { droppableContainer, value } }, value })
+  }
+  return hits.sort((a, b) => a.value - b.value).map(({ collision }) => collision)
+}
 
 /** Only targets of the dragged kind count; a precise hit beats a container hit. */
 const collisionDetection: CollisionDetection = (args) => {
@@ -166,21 +195,23 @@ interface DragHandleProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   className?: string
 }
 
-/** The grip that starts a drag, by pointer or keyboard (Space, arrows, Space). */
-export const DragHandle = forwardRef<HTMLButtonElement, DragHandleProps>(function DragHandle(
-  { label: handleLabel, className, ...rest },
-  ref,
-) {
-  return (
-    <button
-      ref={ref}
-      type="button"
-      className={[styles.handle, className].filter(Boolean).join(' ')}
-      aria-label={handleLabel}
-      title={handleLabel}
-      {...rest}
-    >
-      <GripVertical aria-hidden />
-    </button>
-  )
-})
+/**
+ * The grip that starts a drag, by pointer or keyboard (Space, arrows, Space).
+ * Memoized: dnd-kit re-renders every sortable while something is dragged.
+ */
+export const DragHandle = memo(
+  forwardRef<HTMLButtonElement, DragHandleProps>(function DragHandle({ label: handleLabel, className, ...rest }, ref) {
+    return (
+      <button
+        ref={ref}
+        type="button"
+        className={[styles.handle, className].filter(Boolean).join(' ')}
+        aria-label={handleLabel}
+        title={handleLabel}
+        {...rest}
+      >
+        <GripVertical aria-hidden />
+      </button>
+    )
+  }),
+)

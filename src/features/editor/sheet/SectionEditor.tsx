@@ -7,6 +7,7 @@ import { useToast } from '../../../components/Toast/toast'
 import { createBlock } from '../../resume/model/factories'
 import type { Block, BlockType, Section } from '../../resume/model/types'
 import { useResumeActions } from '../../resume/state/context'
+import { useNeedsReview } from '../importReview'
 import { BlockEditor } from './BlockEditors'
 import { DragHandle } from './dnd'
 import { useDropZone, useSortableNode, useStableIds } from './sortable'
@@ -33,7 +34,8 @@ function firstField(block: Block): string {
     case 'list':
       return fieldIds.item(block.items[0]?.id ?? '')
     case 'tags':
-      return fieldIds.tagInput(block.id)
+      // A new group starts with its name ("Languages"); Enter then moves on to its items.
+      return fieldIds.block(block.id, 'label')
   }
 }
 
@@ -139,6 +141,7 @@ const SortableBlock = memo(function SortableBlock({ block, index, sectionId, dat
   const toast = useToast()
   const label = describeBlock(block)
   const { nodeProps, handleProps } = useSortableNode(block.id, { level: 'block', containerId: sectionId, label })
+  const needsReview = useNeedsReview(block)
 
   const remove = () => {
     dispatch({ type: 'block/remove', id: block.id })
@@ -149,7 +152,8 @@ const SortableBlock = memo(function SortableBlock({ block, index, sectionId, dat
   }
 
   return (
-    <div {...nodeProps} className={styles.block}>
+    <div {...nodeProps} className={styles.block} data-review={needsReview || undefined}>
+      {needsReview && <p className={styles.reviewMark}>Check this: it may not have come through cleanly from your PDF.</p>}
       <div className={styles.tools}>
         <DragHandle {...handleProps} label={`Move ${label}`} />
         <button type="button" className={styles.iconTool} onClick={remove} aria-label={`Remove ${label}`} title="Remove">

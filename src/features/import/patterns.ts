@@ -50,7 +50,12 @@ export function stripBullet(text: string): string {
   return text.replace(BULLET, '').trim()
 }
 
-export const EMAIL = /[\p{L}\d._%+-]+@[\p{L}\d.-]+\.\p{L}{2,}/u
+/**
+ * An e-mail address. The local part only starts where a run of its
+ * characters starts, so a long run without "@" is scanned once, not once
+ * per character.
+ */
+export const EMAIL = /(?<![\p{L}\d._%+-])[\p{L}\d._%+-]+@[\p{L}\d.-]+\.\p{L}{2,}/u
 
 const TLDS =
   'com|net|org|io|dev|me|app|ai|co|info|eu|it|de|fr|es|uk|ch|nl|be|at|pt|pl|se|no|dk|fi|ie|us|ca|au|in|br|tech|site|online|xyz|page|blog|design|studio|codes|cloud|link|bio|ly'

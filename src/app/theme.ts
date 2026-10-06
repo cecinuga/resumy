@@ -18,8 +18,8 @@ function applyTheme(theme: Theme): void {
 }
 
 /**
- * The initial theme is applied by an inline script in index.html (before
- * first paint). This hook keeps it in sync: it follows the system setting
+ * The initial theme (and the browser's theme color) is applied by
+ * public/theme.js before first paint. This hook keeps it in sync: it follows the system setting
  * until the person picks a theme, which is then remembered.
  */
 export function useTheme(): { theme: Theme; toggleTheme: () => void } {
